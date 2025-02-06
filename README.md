@@ -1,69 +1,63 @@
-# Stock Data Analysis App
+# ToFu’s Stock Analysis & Options Trading App
 
-The Stock Data Analysis App is a Streamlit-based application that fetches live stock data from Yahoo Finance (using the yfinance library) and performs technical analysis. The app calculates popular indicators like the Relative Strength Index (RSI) and Moving Average Convergence Divergence (MACD) and displays the results in interactive charts. You can use the app in three different modes:
-
-1. **Single Ticker Analysis:**  
-   Analyze one ticker at a time, view its historical RSI and MACD charts, and check the current indicator values.
-
-2. **RSI Screening for Multiple Tickers (Comma-Separated List):**  
-   Enter multiple tickers separated by commas. The app screens the tickers and displays those with a current RSI under 40. Shorter time intervals (e.g., 1m, 2m, 5m, etc.) are available for screening.
-
-3. **Whole Market Screening (CSV Upload):**  
-   Upload a CSV file containing a column named `Ticker` with your entire list of tickers. The app fetches live data for all tickers in the CSV and displays those with a current RSI under 40 using short interval options.
+This Streamlit application provides real-time stock analysis and options trading insights by fetching data from Yahoo Finance. It computes technical indicators such as RSI, MACD, Bollinger Bands, and various SMAs, and offers email notifications for critical RSI levels.
 
 ## Features
 
-- **Live Data:**  
-  Uses the [yfinance](https://pypi.org/project/yfinance/) library to fetch up-to-date stock data from Yahoo Finance.
+- **Stock Analysis:**  
+  - View real-time stock data with technical indicators.
+  - Display charts for price, RSI, MACD, and Bollinger Bands.
+  - Select timeframes and intervals for customized analysis.
 
-- **Technical Analysis:**  
-  Calculates RSI and MACD indicators, complete with interactive charts.
+- **Options Trading:**  
+  - Retrieve and display options chains (calls and puts) for a given ticker.
+  - Overlay underlying stock charts with technical analysis to support option trading decisions.
 
-- **Flexible Screening Options:**  
-  Choose from different data periods and intervals. For screening modes, short intervals (e.g., 1m, 2m, 5m, 15m, 30m) are available for finer analysis.
+- **Notification Subscription:**  
+  - Subscribe to receive email alerts when a stock’s RSI crosses critical thresholds (RSI < 35 for oversold or RSI > 65 for overbought conditions).
+  - Test notifications directly from the app.
+  - (Note: In this demo, subscriptions are stored in a CSV file; a production system may use a database.)
 
-- **Parallel Data Fetching:**  
-  Uses parallel processing to speed up screening for multiple tickers.
+- **Auto-Refresh:**  
+  - Automatically refreshes the Notification Subscription page at regular intervals (every 5 minutes) for demo purposes.
 
-- **Error Handling:**  
-  Logs and displays errors for tickers that cannot be processed, helping you identify issues with data or input.
+## How It Works
 
-## How to Use
+1. **Data Fetching and Technical Analysis:**  
+   The app leverages the [yfinance](https://pypi.org/project/yfinance/) library to fetch historical stock data. Several helper functions calculate technical indicators:
+   - **RSI:** Uses rolling averages of gains and losses.
+   - **MACD:** Computes exponential moving averages (EMAs) for short and long periods, then derives the signal line.
+   - **Bollinger Bands:** Calculates the moving average and standard deviation to create upper and lower bands.
+   - **Simple Moving Averages (SMA):** Computes SMAs over different windows (20, 50, 200).
 
-### 1. Single Ticker Analysis
+2. **Multi-Page Layout:**  
+   The sidebar navigation splits the app into three main sections:
+   - **Stock Analysis:** Enter a ticker and select data period/interval to view charts and tables.
+   - **Options Trading:** Enter a ticker and (optionally) an expiration date to view options chains along with an underlying stock chart.
+   - **Notification Subscription:** Subscribe by providing an email and ticker. The app saves subscriptions and can test alert notifications based on current RSI levels.
 
-- **Input:** Enter a stock ticker (e.g., `AAPL`).
-- **Options:**  
-  - Choose a data period (e.g., `1d`, `5d`, `1mo`, etc.).
-  - Choose an interval (e.g., `1m`, `2m`, `5m`, etc.).
-  - Optionally check a box to display data only if the current RSI is under 40.
-- **Output:**  
-  - Displays the current RSI and MACD values.
-  - Shows interactive charts for RSI and MACD. The MACD chart is accessible via an expander.
+3. **Parallel Processing:**  
+   For efficiency, the app supports screening multiple tickers in parallel using Python’s `concurrent.futures` module.
 
-### 2. RSI Screening for Multiple Tickers (Comma-Separated List)
+4. **Email Notifications:**  
+   When the RSI crosses set thresholds, the app formats and sends an email using SMTP. (Ensure to configure SMTP settings in the code for email functionality.)
 
-- **Input:** Enter multiple tickers separated by commas (e.g., `AAPL, MSFT, GOOG, AMZN`).
-- **Options:**  
-  - Select a data period suitable for screening.
-  - Select a short interval (e.g., `1m`, `2m`, `5m`, etc.).
-- **Output:**  
-  - Displays a table with tickers that have a current RSI under 40, along with their MACD and signal values.
-  - Any errors during processing are logged and shown in a separate table.
+5. **Auto-Refresh Mechanism:**  
+   The app uses [`streamlit_autorefresh`](https://pypi.org/project/streamlit-autorefresh/) to re-run the subscription page automatically every 5 minutes—ideal for monitoring live data (in production, consider a background job scheduler).
 
-### 3. Whole Market Screening (CSV Upload)
+## Requirements
 
-- **Input:** Upload a CSV file that contains a column named `Ticker` with all the tickers you wish to screen.
-- **Options:**  
-  - Select a data period.
-  - Select a short interval for screening.
-- **Output:**  
-  - Screens all tickers from the CSV and displays those with a current RSI under 40.
-  - Provides feedback on processing time and error logs if any tickers fail to load.
+- Python 3.7+
+- [yfinance](https://pypi.org/project/yfinance/)
+- [pandas](https://pandas.pydata.org/)
+- [numpy](https://numpy.org/)
+- [matplotlib](https://matplotlib.org/)
+- [streamlit](https://streamlit.io/)
+- [streamlit-autorefresh](https://pypi.org/project/streamlit-autorefresh/)
 
 ## Installation
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/yourusername/stock-data-analysis-app.git
-   cd stock-data-analysis-app
+   git clone https://github.com/yourusername/your-repo-name.git
+   cd your-repo-name
