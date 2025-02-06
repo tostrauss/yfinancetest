@@ -479,4 +479,4 @@ elif page == "Notification Subscription":
             enhanced_notification(ticker_notify, subscription_email, period_notify, interval_notify)
         else:
             st.error("Please provide both an email and a ticker to monitor.")
-st_autorefresh(interval=60 * 1000, key="real_time_refresh")
+#st_autorefresh(interval=60 * 1000, key="real_time_refresh")
