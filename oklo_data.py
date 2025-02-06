@@ -18,7 +18,6 @@ print("\n=== Historical Market Data (Last 1 Year) ===")
 history_data = oklo.history(period="1d", interval="1m")
 print(history_data)
 # Optionally, save the data to CSV:
-# history_data.to_csv("oklo_history.csv")
 
 # 3. Dividends and Splits
 print("\n=== Dividends ===")
