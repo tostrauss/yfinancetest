@@ -10,7 +10,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from scipy.stats import norm
-from streamlit_autorefresh import st_autorefresh
+
 
 ###############################################
 # SECTION 1: TECHNICAL INDICATOR CALCULATIONS
@@ -26,7 +26,6 @@ def calculate_rsi(series, window=14):
     loss = -delta.clip(upper=0)
     avg_gain = gain.rolling(window=window, min_periods=window).mean()
     avg_loss = loss.rolling(window=window, min_periods=window).mean()
-    # Avoid division by zero; replace 0 with a small number or NaN.
     rs = avg_gain / avg_loss.replace(0, np.nan)
     rsi = 100 - (100 / (1 + rs))
     return rsi
@@ -290,8 +289,8 @@ def enhanced_notification(ticker, email, period="1d", interval="1m"):
 ###############################################
 
 # Set page config for wide layout.
-st.set_page_config(page_title="Ultimate Stock Analysis & Options Trading", layout="wide")
-st.title("Ultimate Stock Analysis & Options Trading App")
+st.set_page_config(page_title="ToFu's Stock Analysis & Options", layout="wide")
+st.title("ToFu's Analysis & Options Trading")
 
 # Sidebar Navigation for multi-page functionality.
 page = st.sidebar.radio("Navigation", ["Stock Analysis", "Options Trading", "Notification Subscription"])
