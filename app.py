@@ -10,7 +10,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from scipy.stats import norm
-
+from streamlit_autorefresh import st_autorefresh
 
 ###############################################
 # SECTION 1: TECHNICAL INDICATOR CALCULATIONS
@@ -32,7 +32,7 @@ def calculate_rsi(series, window=14):
 
 def calculate_macd(series, span_short=12, span_long=26, span_signal=9):
     """
-    Calculate the MACD (Moving Average Convergence Divergence) indicator.
+    Calculate MACD (Moving Average Convergence Divergence) indicator.
     Returns the MACD line, Signal line, and Histogram.
     """
     ema_short = series.ewm(span=span_short, adjust=False).mean()
@@ -44,8 +44,8 @@ def calculate_macd(series, span_short=12, span_long=26, span_signal=9):
 
 def calculate_bollinger_bands(series, window=20, num_std=2):
     """
-    Calculate Bollinger Bands for the given series.
-    Returns the middle band (SMA), upper band and lower band.
+    Calculate Bollinger Bands for given series.
+    Returns the middle band (SMA), upper band, and lower band.
     """
     sma = series.rolling(window=window).mean()
     std = series.rolling(window=window).std()
@@ -55,7 +55,7 @@ def calculate_bollinger_bands(series, window=20, num_std=2):
 
 def calculate_sma(series, window):
     """
-    Calculate the Simple Moving Average (SMA) of a series.
+    Calculate Simple Moving Average (SMA) of a series.
     """
     return series.rolling(window=window).mean()
 
@@ -66,7 +66,7 @@ def calculate_sma(series, window):
 def fetch_stock_data(ticker, period="1d", interval="1m"):
     """
     Fetch historical stock data using yfinance.
-    Designed for real‑time intraday data (e.g., period="1d", interval="1m")
+    Designed for real‑time data (e.g., period="1d", interval="1m")
     but supports multiple periods and intervals.
     
     Returns:
@@ -94,13 +94,11 @@ def fetch_stock_data(ticker, period="1d", interval="1m"):
         data["BB_Mid"] = bb_mid
         data["BB_Upper"] = bb_upper
         data["BB_Lower"] = bb_lower
-        # Calculate cumulative daily high and low.
         data["Day_High"] = data["High"].cummax()
         data["Day_Low"] = data["Low"].cummin()
     except Exception as e:
         st.error(f"Error processing data for {ticker}: {e}")
         raise
-
     return data
 
 ###############################################
@@ -122,7 +120,6 @@ def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
     Returns:
       delta, gamma, theta (per day), vega, rho, bs_price
     """
-    # Validate inputs.
     if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
         return (np.nan,)*6
     try:
@@ -157,7 +154,7 @@ def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
 def add_greeks(options_df, S, T, r=0.01, option_type='call'):
     """
     Add Black-Scholes Greeks columns to an options DataFrame.
-    Options DataFrame must contain a column "strike" and "impliedVolatility".
+    The DataFrame must have columns "strike" and "impliedVolatility".
     
     Parameters:
       options_df : DataFrame with options chain data.
@@ -191,7 +188,7 @@ def get_option_chain(ticker, expiration=None):
     
     Parameters:
       ticker : str - Stock symbol.
-      expiration : str or None - Expiration date in YYYY-MM-DD. If None, use the nearest.
+      expiration : str or None - Expiration date in YYYY-MM-DD. If None, the app returns the list.
     
     Returns:
       calls, puts DataFrames and the expiration date (str) if successful;
@@ -202,8 +199,9 @@ def get_option_chain(ticker, expiration=None):
         expirations = ticker_obj.options
         if not expirations:
             return None, None, "No options data available."
-        # Use nearest expiration if not provided or invalid.
+        # If an expiration date is provided and valid, use it; otherwise, return the list.
         if expiration is None or expiration not in expirations:
+            # Here we choose the first available expiration if the user did not choose one.
             expiration = expirations[0]
         chain = ticker_obj.option_chain(expiration)
         return chain.calls, chain.puts, expiration
@@ -219,10 +217,10 @@ def send_email_notification(to_email, subject, body):
     Send an email using SMTP.
     Update SMTP_SERVER, SMTP_PORT, SMTP_USER, and SMTP_PASSWORD with your actual settings.
     """
-    SMTP_SERVER = "smtp.example.com"  # e.g., smtp.gmail.com
-    SMTP_PORT = 587
-    SMTP_USER = "your_email@example.com"
-    SMTP_PASSWORD = "your_email_password"
+    SMTP_SERVER = ""  
+    SMTP_PORT = 1
+    SMTP_USER = ""
+    SMTP_PASSWORD = ""
     FROM_EMAIL = SMTP_USER
 
     msg = MIMEMultipart()
@@ -244,7 +242,7 @@ def send_email_notification(to_email, subject, body):
 
 def enhanced_notification(ticker, email, period="1d", interval="1m"):
     """
-    Check the latest stock data for ticker and send an email if the RSI is in a critical zone.
+    Check the latest stock data for the ticker and send an email if RSI is critical.
     The email includes current price, volume, SMAs, and RSI.
     
     Critical thresholds: RSI < 35 (Oversold) or RSI > 65 (Overbought).
@@ -284,19 +282,16 @@ def enhanced_notification(ticker, email, period="1d", interval="1m"):
     except Exception as e:
         st.error(f"Error during notification: {e}")
 
-###############################################
+#########################################################
 # SECTION 6: STREAMLIT APP LAYOUT & MULTI-PAGE NAVIGATION
-###############################################
+#########################################################
 
-# Set page config for wide layout.
-st.set_page_config(page_title="ToFu's Stock Analysis & Options", layout="wide")
-st.title("ToFu's Analysis & Options Trading")
+st.set_page_config(page_title="ToFu´s Stock Analysis & Options Trading", layout="wide")
+st.title("ToFu´s Stock Analysis & Options Trading")
 
-# Sidebar Navigation for multi-page functionality.
+# Sidebar Navigation
 page = st.sidebar.radio("Navigation", ["Stock Analysis", "Options Trading", "Notification Subscription"])
-
-# Uncomment this line to auto-refresh the page every minute.
-# st_autorefresh(interval=60 * 1000, key="real_time_refresh")
+st_autorefresh(interval=60 * 1000, key="real_time_refresh")
 
 ###############################################
 # PAGE 1: REAL‑TIME STOCK ANALYSIS
@@ -306,19 +301,15 @@ if page == "Stock Analysis":
     st.markdown(
         """
         **Overview:**  
-        This page provides real‑time intraday data and key technical indicators:
+        This page provides real‑time data and key technical indicators:
         - **RSI (Relative Strength Index)**
         - **MACD (Moving Average Convergence Divergence)**
         - **Bollinger Bands**
         - **Simple Moving Averages (SMA20, SMA50, SMA200)**
         - **Daily High/Low Levels**
-
-        Use the controls below to select the ticker, period, and interval.
-        Default: **AAPL**, period: **1d**, interval: **1m** (intraday).
         """
     )
     
-    # Input controls with robust defaults.
     ticker_input = st.text_input("Enter Stock Ticker", value="AAPL")
     col1, col2 = st.columns(2)
     with col1:
@@ -361,7 +352,7 @@ if page == "Stock Analysis":
             st.error(f"Error analyzing {ticker_input}: {e}")
 
 ###############################################
-# PAGE 2: OPTIONS TRADING & GREEKS
+# PAGE 2: OPTIONS TRADING & GREEKS (with Graph)
 ###############################################
 elif page == "Options Trading":
     st.header("Options Trading Analysis & Greeks")
@@ -370,23 +361,38 @@ elif page == "Options Trading":
         Retrieve and analyze options chain data including Black–Scholes Greeks.
         
         **Instructions:**
-        - Enter the ticker and an expiration date in YYYY-MM-DD format.
-        - If no expiration is entered, the nearest available expiration will be used.
+        - Enter the ticker below.
+        - The app will fetch the list of available expiration dates.  
+          Select the expiration date from the list.
         - Data will include Delta, Gamma, Theta (per day), Vega, Rho, and the estimated option price.
+        - The graph below displays the Black–Scholes estimated option price as a function of strike price,
+          with separate line plots for calls and puts, and the underlying price indicated.
         """
     )
     
     ticker_option = st.text_input("Enter Stock Ticker for Options", value="AAPL", key="option_ticker")
-    expiration_input = st.text_input("Enter Expiration Date (YYYY-MM-DD) or leave blank", value="", key="option_exp")
     
-    if st.button("Get Option Chain"):
+    # Fetch available expirations for the entered ticker.
+    try:
+        ticker_obj = yf.Ticker(ticker_option)
+        expirations = ticker_obj.options
+        if not expirations:
+            st.error("No options expirations available for this ticker.")
+        else:
+            expiration_selected = st.selectbox("Select Expiration Date", expirations)
+    except Exception as e:
+        st.error(f"Error retrieving expiration dates: {e}")
+        expirations = []
+        expiration_selected = None
+    
+    if st.button("Get Option Chain") and expiration_selected:
         with st.spinner("Fetching options data..."):
-            calls, puts, expiration_info = get_option_chain(ticker_option, expiration_input.strip() or None)
+            calls, puts, expiration_info = get_option_chain(ticker_option, expiration_selected)
         if (calls is None) or (puts is None):
             st.error(f"Error retrieving options: {expiration_info}")
         else:
             st.success(f"Options data for expiration: {expiration_info}")
-            # Compute time to expiration in years.
+            # Calculate time to expiration in years.
             try:
                 exp_date = datetime.datetime.strptime(expiration_info, "%Y-%m-%d")
                 today = datetime.datetime.today()
@@ -416,6 +422,27 @@ elif page == "Options Trading":
                 st.dataframe(puts)
             else:
                 st.info("No put options data available.")
+            
+            # ---------------------------
+            # NEW: OPTION GRAPH (Line Plot)
+            # ---------------------------
+            st.markdown("### Black–Scholes Option Price vs. Strike Price")
+            fig, ax = plt.subplots(figsize=(10, 6))
+            # Plot calls as a line chart (sorted by strike)
+            if not calls.empty:
+                calls_sorted = calls.sort_values("strike")
+                ax.plot(calls_sorted["strike"], calls_sorted["BS_Price"], label="Calls", color="blue", marker="o")
+            # Plot puts as a line chart (sorted by strike)
+            if not puts.empty:
+                puts_sorted = puts.sort_values("strike")
+                ax.plot(puts_sorted["strike"], puts_sorted["BS_Price"], label="Puts", color="red", marker="o")
+            # Mark the underlying price as a vertical line.
+            ax.axvline(x=S, color="black", linestyle="--", label="Underlying Price")
+            ax.set_xlabel("Strike Price")
+            ax.set_ylabel("Option Price (Black–Scholes Estimate)")
+            ax.set_title(f"Option Price vs. Strike Price for Expiration: {expiration_info}")
+            ax.legend()
+            st.pyplot(fig)
 
 ###############################################
 # PAGE 3: NOTIFICATION SUBSCRIPTION & TESTING
@@ -452,8 +479,4 @@ elif page == "Notification Subscription":
             enhanced_notification(ticker_notify, subscription_email, period_notify, interval_notify)
         else:
             st.error("Please provide both an email and a ticker to monitor.")
-
-###############################################
-# OPTIONAL: AUTO-REFRESH (UNCOMMENT IF DESIRED)
-###############################################
-# st_autorefresh(interval=60 * 1000, key="real_time_refresh")
+st_autorefresh(interval=60 * 1000, key="real_time_refresh")
