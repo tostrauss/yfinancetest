@@ -1,6 +1,6 @@
 # ToFu´s Stock Analysis and Option Trading
 
-**ToFu´s Stock Analysis and Option Trading** is a comprehensive, multi-page web application designed for traders and financial analysts. Built with [Streamlit](https://streamlit.io/) and powered by live data from [Yahoo Finance](https://finance.yahoo.com/), this application provides real-time stock analysis and options trading insights, complete with advanced technical indicators and Black–Scholes-based Greeks calculations.
+**ToFu´s Stock Analysis and Option Trading** is a comprehensive, multi-page web application designed for traders and financial analysts built by Tobias Strauss. Built with [Streamlit](https://streamlit.io/) and powered by live data from [Yahoo Finance](https://finance.yahoo.com/), this application provides real-time stock analysis and options trading insights, complete with advanced technical indicators and Black–Scholes-based Greeks calculations.
 
 ## Table of Contents
 
@@ -30,7 +30,7 @@
 ## Features
 
 - **Real-Time Stock Analysis**  
-  - Displays live intraday data (e.g., AAPL with a 1-day period at 1-minute intervals).
+  - Displays live intraday data (by default, AAPL with a 1-day period at 1-minute intervals).
   - Computes and plots technical indicators: RSI, MACD, Bollinger Bands, and SMAs.
   - Shows daily high/low values and supports multiple intervals and periods.
   
