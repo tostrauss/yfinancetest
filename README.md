@@ -1,6 +1,6 @@
 # ToFu´s Stock Analysis and Option Trading
 
-**ToFu´s Stock Analysis and Option Trading** is a comprehensive, multi-page web application designed for traders and financial analysts from Tobias Strauss. Built with [Streamlit](https://streamlit.io/) and powered by live data from [Yahoo Finance](https://finance.yahoo.com/), this application provides real-time stock analysis and options trading insights—complete with advanced technical indicators and Black–Scholes-based Greeks calculations.
+**ToFu´s Stock Analysis and Option Trading** is a comprehensive, multi-page web application designed for traders and financial analysts by Tobias Strauss. Built with [Streamlit](https://streamlit.io/) and powered by live data from [Yahoo Finance](https://finance.yahoo.com/), this application provides real-time stock analysis and options trading with technical indicators and Black–Scholes-based Greeks calculations. Any recommendations etc. welcome.
 
 ## Table of Contents
 
