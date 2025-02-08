@@ -1,6 +1,12 @@
+##########################################
+# Happy Trading & Coding. It´s ToFu-Time #
+##########################################
+
 import yfinance as yf
 import pandas as pd
 import numpy as np
+if not hasattr(np, "NaN"):
+    np.NaN = np.nan
 import matplotlib.pyplot as plt
 import streamlit as st
 import datetime
@@ -11,53 +17,58 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from scipy.stats import norm
 from streamlit_autorefresh import st_autorefresh
+import pandas_ta as ta
 
 ###############################################
-# SECTION 1: TECHNICAL INDICATOR CALCULATIONS
+# SECTION 1: TECHNICAL INDICATOR CALCULATIONS USING PANDAS_TA
 ###############################################
 
-def calculate_rsi(series, window=14):
+def add_technical_indicators(data):
     """
-    Calculate Relative Strength Index (RSI) of a price series.
-    Uses a rolling average of gains and losses.
-    """
-    delta = series.diff()
-    gain = delta.clip(lower=0)
-    loss = -delta.clip(upper=0)
-    avg_gain = gain.rolling(window=window, min_periods=window).mean()
-    avg_loss = loss.rolling(window=window, min_periods=window).mean()
-    rs = avg_gain / avg_loss.replace(0, np.nan)
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
+    Uses pandas_ta to compute:
+    - RSI (14)
+    - MACD (fast=12, slow=26, signal=9)
+    - Bollinger Bands (length=20, std=2)
+    - SMAs (20, 50, 200)
+    - VWAP
+    - ADX (14)
+    Also computes pivot points (PP, R1, S1) manually,
+    and adds daily high and low values.
 
-def calculate_macd(series, span_short=12, span_long=26, span_signal=9):
     """
-    Calculate MACD (Moving Average Convergence Divergence) indicator.
-    Returns the MACD line, Signal line, and Histogram.
-    """
-    ema_short = series.ewm(span=span_short, adjust=False).mean()
-    ema_long = series.ewm(span=span_long, adjust=False).mean()
-    macd = ema_short - ema_long
-    signal = macd.ewm(span=span_signal, adjust=False).mean()
-    histogram = macd - signal
-    return macd, signal, histogram
-
-def calculate_bollinger_bands(series, window=20, num_std=2):
-    """
-    Calculate Bollinger Bands for given series.
-    Returns the middle band (SMA), upper band, and lower band.
-    """
-    sma = series.rolling(window=window).mean()
-    std = series.rolling(window=window).std()
-    upper_band = sma + num_std * std
-    lower_band = sma - num_std * std
-    return sma, upper_band, lower_band
-
-def calculate_sma(series, window):
-    """
-    Calculate Simple Moving Average (SMA) of a series.
-    """
-    return series.rolling(window=window).mean()
+    try:
+        # RSI
+        data["RSI"] = ta.rsi(data["Close"], length=14)
+        # MACD: returns MACD, Signal, Histogram
+        macd = ta.macd(data["Close"], fast=12, slow=26, signal=9)
+        data["MACD"] = macd["MACD_12_26_9"]
+        data["Signal"] = macd["MACDs_12_26_9"]
+        data["MACD_Hist"] = macd["MACDh_12_26_9"]
+        # Bollinger Bands
+        bb = ta.bbands(data["Close"], length=20, std=2)
+        data["BBL"] = bb["BBL_20_2.0"]
+        data["BBM"] = bb["BBM_20_2.0"]
+        data["BBU"] = bb["BBU_20_2.0"]
+        # Simple Moving Averages
+        data["SMA20"] = ta.sma(data["Close"], length=20)
+        data["SMA50"] = ta.sma(data["Close"], length=50)
+        data["SMA200"] = ta.sma(data["Close"], length=200)
+        # VWAP (Volume Weighted Average Price)
+        # pandas_ta vwap accepts four series: High, Low, Close, and Volume.
+        data["VWAP"] = ta.vwap(data["High"], data["Low"], data["Close"], data["Volume"])
+        # ADX (Average Directional Index)
+        adx = ta.adx(data["High"], data["Low"], data["Close"], length=14)
+        data["ADX"] = adx["ADX_14"]
+        # Pivot Points (manual calculation)
+        data["PP"] = (data["High"] + data["Low"] + data["Close"]) / 3
+        data["R1"] = 2 * data["PP"] - data["Low"]
+        data["S1"] = 2 * data["PP"] - data["High"]
+        # Daily high and low (cumulative)
+        data["Day_High"] = data["High"].cummax()
+        data["Day_Low"] = data["Low"].cummin()
+    except Exception as e:
+        st.error(f"Error adding technical indicators: {e}")
+    return data
 
 ###############################################
 # SECTION 2: DATA FETCHING & PROCESSING FOR STOCKS
@@ -65,37 +76,26 @@ def calculate_sma(series, window):
 
 def fetch_stock_data(ticker, period="1d", interval="1m"):
     """
-    Fetch historical stock data using yfinance.
-    Designed for real‑time data (e.g., period="1d", interval="1m")
-    but supports multiple periods and intervals.
+    Fetch historical stock data using yfinance and enriching it with technical indicators.
     
-    Returns:
-      A DataFrame with added columns for RSI, MACD, Bollinger Bands,
-      SMA20, SMA50, SMA200, and daily high/low.
+    Parameters:
+      ticker (str): Stock symbol.
+      period (str): Data period (e.g., "1d", "5d", "1mo", etc.).
+      interval (str): Data interval (e.g., "1m", "5m", "15m", etc.).
+
     """
     try:
         ticker_obj = yf.Ticker(ticker)
         data = ticker_obj.history(period=period, interval=interval)
         if data.empty:
             raise ValueError(f"No data returned for ticker: {ticker}")
+        data.index = data.index.tz_localize(None)
     except Exception as e:
         st.error(f"Error fetching data for {ticker}: {e}")
         raise
 
     try:
-        data["RSI"] = calculate_rsi(data["Close"])
-        macd, signal, _ = calculate_macd(data["Close"])
-        data["MACD"] = macd
-        data["Signal"] = signal
-        data["SMA20"] = calculate_sma(data["Close"], 20)
-        data["SMA50"] = calculate_sma(data["Close"], 50)
-        data["SMA200"] = calculate_sma(data["Close"], 200)
-        bb_mid, bb_upper, bb_lower = calculate_bollinger_bands(data["Close"])
-        data["BB_Mid"] = bb_mid
-        data["BB_Upper"] = bb_upper
-        data["BB_Lower"] = bb_lower
-        data["Day_High"] = data["High"].cummax()
-        data["Day_Low"] = data["Low"].cummin()
+        data = add_technical_indicators(data)
     except Exception as e:
         st.error(f"Error processing data for {ticker}: {e}")
         raise
@@ -110,15 +110,13 @@ def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
     Compute Black-Scholes Greeks for a European option.
     
     Parameters:
-      S : float - Underlying asset price.
-      K : float - Strike price.
-      T : float - Time to expiration in years.
-      r : float - Risk-free interest rate (annualized, decimal).
-      sigma : float - Implied volatility (annualized, decimal).
-      option_type : str - 'call' or 'put'.
+      S (float): Underlying asset price.
+      K (float): Strike price.
+      T (float): Time to expiration in years.
+      r (float): Risk-free interest rate (annualized, decimal).
+      sigma (float): Implied volatility (annualized, decimal).
+      option_type (str): 'call' or 'put'.
     
-    Returns:
-      delta, gamma, theta (per day), vega, rho, bs_price
     """
     if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
         return (np.nan,)*6
@@ -153,18 +151,15 @@ def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
 
 def add_greeks(options_df, S, T, r=0.01, option_type='call'):
     """
-    Add Black-Scholes Greeks columns to an options DataFrame.
-    The DataFrame must have columns "strike" and "impliedVolatility".
+    Add Black-Scholes Greeks to an options DataFrame.
     
     Parameters:
-      options_df : DataFrame with options chain data.
-      S : float - Current underlying stock price.
-      T : float - Time to expiration in years.
-      r : float - Risk-free interest rate.
-      option_type : 'call' or 'put'.
+      options_df (DataFrame): Options chain data (must include "strike" and "impliedVolatility").
+      S (float): Current underlying stock price.
+      T (float): Time to expiration in years.
+      r (float): Risk-free interest rate.
+      option_type (str): 'call' or 'put'.
     
-    Returns:
-      The DataFrame with additional columns: Delta, Gamma, Theta, Vega, Rho, BS_Price.
     """
     def compute_row(row):
         if pd.notna(row.get("impliedVolatility", np.nan)):
@@ -187,21 +182,16 @@ def get_option_chain(ticker, expiration=None):
     Retrieve the options chain for the given ticker.
     
     Parameters:
-      ticker : str - Stock symbol.
-      expiration : str or None - Expiration date in YYYY-MM-DD. If None, the app returns the list.
-    
-    Returns:
-      calls, puts DataFrames and the expiration date (str) if successful;
-      otherwise, an error message in the third return.
+      ticker (str): Stock symbol.
+      expiration (str or None): Expiration date in YYYY-MM-DD. If None, uses the first available expiration.
+
     """
     try:
         ticker_obj = yf.Ticker(ticker)
         expirations = ticker_obj.options
         if not expirations:
             return None, None, "No options data available."
-        # If an expiration date is provided and valid, use it; otherwise, return the list.
         if expiration is None or expiration not in expirations:
-            # Here we choose the first available expiration if the user did not choose one.
             expiration = expirations[0]
         chain = ticker_obj.option_chain(expiration)
         return chain.calls, chain.puts, expiration
@@ -214,8 +204,9 @@ def get_option_chain(ticker, expiration=None):
 
 def send_email_notification(to_email, subject, body):
     """
-    Send an email using SMTP.
-    Update SMTP_SERVER, SMTP_PORT, SMTP_USER, and SMTP_PASSWORD with your actual settings.
+    Send an email notification using SMTP.
+    
+    **IMPORTANT:** Update SMTP_SERVER, SMTP_PORT, SMTP_USER, and SMTP_PASSWORD.
     """
     SMTP_SERVER = ""  
     SMTP_PORT = 1
@@ -242,10 +233,11 @@ def send_email_notification(to_email, subject, body):
 
 def enhanced_notification(ticker, email, period="1d", interval="1m"):
     """
-    Check the latest stock data for the ticker and send an email if RSI is critical.
-    The email includes current price, volume, SMAs, and RSI.
+    Check the latest stock data for the given ticker and send an email alert if RSI is critical.
     
     Critical thresholds: RSI < 35 (Oversold) or RSI > 65 (Overbought).
+    The alert includes current price, volume, and key SMAs.
+
     """
     try:
         data = fetch_stock_data(ticker, period, interval)
@@ -282,9 +274,9 @@ def enhanced_notification(ticker, email, period="1d", interval="1m"):
     except Exception as e:
         st.error(f"Error during notification: {e}")
 
-#########################################################
+###############################################
 # SECTION 6: STREAMLIT APP LAYOUT & MULTI-PAGE NAVIGATION
-#########################################################
+###############################################
 
 st.set_page_config(page_title="ToFu´s Stock Analysis & Options Trading", layout="wide")
 st.title("ToFu´s Stock Analysis & Options Trading")
@@ -301,12 +293,16 @@ if page == "Stock Analysis":
     st.markdown(
         """
         **Overview:**  
-        This page provides real‑time data and key technical indicators:
+        This page provides real‑time data and a comprehensive set of technical indicators:
         - **RSI (Relative Strength Index)**
         - **MACD (Moving Average Convergence Divergence)**
         - **Bollinger Bands**
         - **Simple Moving Averages (SMA20, SMA50, SMA200)**
+        - **VWAP (Volume Weighted Average Price)**
+        - **ADX (Average Directional Index)**
+        - **Pivot Points (PP, R1, S1)**
         - **Daily High/Low Levels**
+
         """
     )
     
@@ -323,13 +319,17 @@ if page == "Stock Analysis":
             st.subheader(f"Intraday Data for {ticker_input} ({period}, {interval} interval)")
             st.dataframe(data.tail(10))
             
-            # Price chart with SMAs and Bollinger Bands.
+            # Price chart with SMAs, Bollinger Bands, VWAP, and Pivot Points.
             fig_price, ax_price = plt.subplots(figsize=(12, 6))
             ax_price.plot(data.index, data["Close"], label="Close Price", color="blue")
             ax_price.plot(data.index, data["SMA20"], label="SMA20", linestyle="--", color="orange")
             ax_price.plot(data.index, data["SMA50"], label="SMA50", linestyle="--", color="green")
             ax_price.plot(data.index, data["SMA200"], label="SMA200", linestyle="--", color="red")
-            ax_price.fill_between(data.index, data["BB_Lower"], data["BB_Upper"], color="gray", alpha=0.2, label="Bollinger Bands")
+            ax_price.plot(data.index, data["VWAP"], label="VWAP", linestyle="-.", color="magenta")
+            ax_price.fill_between(data.index, data["BBL"], data["BBU"], color="gray", alpha=0.2, label="Bollinger Bands")
+            ax_price.axhline(y=data["PP"].iloc[-1], label="Pivot Point (PP)", color="grey", linestyle="--")
+            ax_price.axhline(y=data["R1"].iloc[-1], label="Resistance 1 (R1)", color="red", linestyle="--")
+            ax_price.axhline(y=data["S1"].iloc[-1], label="Support 1 (S1)", color="green", linestyle="--")
             ax_price.set_title(f"{ticker_input} - Price Chart (Intraday)")
             ax_price.legend()
             st.pyplot(fig_price)
@@ -348,6 +348,14 @@ if page == "Stock Analysis":
             ax_macd.legend()
             st.pyplot(fig_indicators)
             
+            # ADX Chart
+            fig_adx, ax_adx = plt.subplots(figsize=(12, 4))
+            ax_adx.plot(data.index, data["ADX"], label="ADX", color="brown")
+            ax_adx.axhline(25, color="red", linestyle="--", label="Trend Threshold (25)")
+            ax_adx.set_title("Average Directional Index (ADX)")
+            ax_adx.legend()
+            st.pyplot(fig_adx)
+            
         except Exception as e:
             st.error(f"Error analyzing {ticker_input}: {e}")
 
@@ -363,10 +371,10 @@ elif page == "Options Trading":
         **Instructions:**
         - Enter the ticker below.
         - The app will fetch the list of available expiration dates.  
-          Select the expiration date from the list.
         - Data will include Delta, Gamma, Theta (per day), Vega, Rho, and the estimated option price.
         - The graph below displays the Black–Scholes estimated option price as a function of strike price,
           with separate line plots for calls and puts, and the underlying price indicated.
+
         """
     )
     
@@ -392,7 +400,6 @@ elif page == "Options Trading":
             st.error(f"Error retrieving options: {expiration_info}")
         else:
             st.success(f"Options data for expiration: {expiration_info}")
-            # Calculate time to expiration in years.
             try:
                 exp_date = datetime.datetime.strptime(expiration_info, "%Y-%m-%d")
                 today = datetime.datetime.today()
@@ -401,7 +408,6 @@ elif page == "Options Trading":
                 st.error(f"Error parsing expiration date: {e}")
                 T = 0.001
 
-            # Get the current underlying price.
             try:
                 current_data = yf.Ticker(ticker_option).history(period="1d", interval="1m")
                 S = current_data["Close"].iloc[-1]
@@ -423,25 +429,38 @@ elif page == "Options Trading":
             else:
                 st.info("No put options data available.")
             
-            # ---------------------------
-            # NEW: OPTION GRAPH (Line Plot)
-            # ---------------------------
+            # OPTION GRAPH (Dual-panel Layout)
             st.markdown("### Black–Scholes Option Price vs. Strike Price")
-            fig, ax = plt.subplots(figsize=(10, 6))
-            # Plot calls as a line chart (sorted by strike)
+            fig, (ax_calls, ax_puts) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10), sharex=True)
+            
+            # Plot for Call Options
             if not calls.empty:
                 calls_sorted = calls.sort_values("strike")
-                ax.plot(calls_sorted["strike"], calls_sorted["BS_Price"], label="Calls", color="blue", marker="o")
-            # Plot puts as a line chart (sorted by strike)
+                ax_calls.plot(calls_sorted["strike"], calls_sorted["BS_Price"], label="Calls", color="blue", marker="o", linestyle="-")
+                ax_calls.axvline(x=S, color="black", linestyle="--", label="Underlying Price")
+                ax_calls.set_title("Call Options")
+                ax_calls.set_ylabel("BS Price")
+                ax_calls.grid(True)
+                ax_calls.legend()
+            else:
+                ax_calls.text(0.5, 0.5, "No call options data available", transform=ax_calls.transAxes, ha="center", va="center")
+                ax_calls.set_title("Call Options")
+            
+            # Plot for Put Options
             if not puts.empty:
                 puts_sorted = puts.sort_values("strike")
-                ax.plot(puts_sorted["strike"], puts_sorted["BS_Price"], label="Puts", color="red", marker="o")
-            # Mark the underlying price as a vertical line.
-            ax.axvline(x=S, color="black", linestyle="--", label="Underlying Price")
-            ax.set_xlabel("Strike Price")
-            ax.set_ylabel("Option Price (Black–Scholes Estimate)")
-            ax.set_title(f"Option Price vs. Strike Price for Expiration: {expiration_info}")
-            ax.legend()
+                ax_puts.plot(puts_sorted["strike"], puts_sorted["BS_Price"], label="Puts", color="red", marker="o", linestyle="-")
+                ax_puts.axvline(x=S, color="black", linestyle="--", label="Underlying Price")
+                ax_puts.set_title("Put Options")
+                ax_puts.set_xlabel("Strike Price")
+                ax_puts.set_ylabel("BS Price")
+                ax_puts.grid(True)
+                ax_puts.legend()
+            else:
+                ax_puts.text(0.5, 0.5, "No put options data available", transform=ax_puts.transAxes, ha="center", va="center")
+                ax_puts.set_title("Put Options")
+            
+            fig.suptitle(f"Option Prices vs. Strike Price for Expiration: {expiration_info}", fontsize=16)
             st.pyplot(fig)
 
 ###############################################
@@ -457,6 +476,7 @@ elif page == "Notification Subscription":
         - **RSI > 65:** Overbought condition.
         
         The notification email will include current price, volume, SMAs, and RSI.
+        
         """
     )
     subscription_email = st.text_input("Enter Your Email Address", value="", key="notify_email")
@@ -471,7 +491,6 @@ elif page == "Notification Subscription":
         if not subscription_email or "@" not in subscription_email:
             st.error("Please enter a valid email address.")
         else:
-            # In production, store the subscription (e.g., in a database).
             st.success("Subscription successful! (For demo, click 'Test Notification' to simulate an alert.)")
     
     if st.button("Test Notification Now"):
@@ -479,4 +498,6 @@ elif page == "Notification Subscription":
             enhanced_notification(ticker_notify, subscription_email, period_notify, interval_notify)
         else:
             st.error("Please provide both an email and a ticker to monitor.")
-#st_autorefresh(interval=60 * 1000, key="real_time_refresh")
+
+# Uncomment the line below to enable auto-refresh if desired.
+# st_autorefresh(interval=60 * 1000, key="real_time_refresh")
