@@ -204,4 +204,10 @@ Cash Flow Ratio
 * This ratio is particularly useful for stakeholders to assess how well a company can sustain its operations and meet its obligations using the cash generated from its core business activities, tahter than relying on external financinf or liquidating assets.
 
 
+#####
+- An RSI above 50 indicate "hold".
+- An RSI leaving 70 going negative indicates "sell".
+- An RSI leaving 30 going positive indicates "buy".
+- An RSI moving opposite of Stock-Price indicates potential reversal. 
+
 

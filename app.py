@@ -275,7 +275,7 @@ st.set_page_config(page_title="ToFu´s Stock Analysis & Options Trading", layout
 st.title("ToFu´s Stock Analysis & Options Trading")
 
 # Define the Investment Information markdown content
-investment_info_content = """
+investment_info_content = r"""
 # Info
 ---
 

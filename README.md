@@ -80,6 +80,6 @@ More than welcome! Just fork and submit pull requests :)
 This project is licensed under the MIT License. 
 
 ## Contact
--Name: Tobias Strauss
--Email: tobias.p.strauss@gmail.com
+- Name: Tobias Strauss
+- Email: tobias.p.strauss@gmail.com
 
