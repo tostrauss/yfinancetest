@@ -34,7 +34,6 @@ def add_technical_indicators(data):
     - ADX (14)
     Also computes pivot points (PP, R1, S1) manually,
     and adds daily high and low values.
-
     """
     try:
         # RSI
@@ -54,7 +53,6 @@ def add_technical_indicators(data):
         data["SMA50"] = ta.sma(data["Close"], length=50)
         data["SMA200"] = ta.sma(data["Close"], length=200)
         # VWAP (Volume Weighted Average Price)
-        # pandas_ta vwap accepts four series: High, Low, Close, and Volume.
         data["VWAP"] = ta.vwap(data["High"], data["Low"], data["Close"], data["Volume"])
         # ADX (Average Directional Index)
         adx = ta.adx(data["High"], data["Low"], data["Close"], length=14)
@@ -76,13 +74,12 @@ def add_technical_indicators(data):
 
 def fetch_stock_data(ticker, period="1d", interval="1m"):
     """
-    Fetch historical stock data using yfinance and enriching it with technical indicators.
+    Fetch historical stock data using yfinance and enrich it with technical indicators.
     
     Parameters:
       ticker (str): Stock symbol.
       period (str): Data period (e.g., "1d", "5d", "1mo", etc.).
       interval (str): Data interval (e.g., "1m", "5m", "15m", etc.).
-
     """
     try:
         ticker_obj = yf.Ticker(ticker)
@@ -116,7 +113,6 @@ def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
       r (float): Risk-free interest rate (annualized, decimal).
       sigma (float): Implied volatility (annualized, decimal).
       option_type (str): 'call' or 'put'.
-    
     """
     if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
         return (np.nan,)*6
@@ -159,7 +155,6 @@ def add_greeks(options_df, S, T, r=0.01, option_type='call'):
       T (float): Time to expiration in years.
       r (float): Risk-free interest rate.
       option_type (str): 'call' or 'put'.
-    
     """
     def compute_row(row):
         if pd.notna(row.get("impliedVolatility", np.nan)):
@@ -184,7 +179,6 @@ def get_option_chain(ticker, expiration=None):
     Parameters:
       ticker (str): Stock symbol.
       expiration (str or None): Expiration date in YYYY-MM-DD. If None, uses the first available expiration.
-
     """
     try:
         ticker_obj = yf.Ticker(ticker)
@@ -237,7 +231,6 @@ def enhanced_notification(ticker, email, period="1d", interval="1m"):
     
     Critical thresholds: RSI < 35 (Oversold) or RSI > 65 (Overbought).
     The alert includes current price, volume, and key SMAs.
-
     """
     try:
         data = fetch_stock_data(ticker, period, interval)
@@ -281,8 +274,102 @@ def enhanced_notification(ticker, email, period="1d", interval="1m"):
 st.set_page_config(page_title="ToFu´s Stock Analysis & Options Trading", layout="wide")
 st.title("ToFu´s Stock Analysis & Options Trading")
 
-# Sidebar Navigation
-page = st.sidebar.radio("Navigation", ["Stock Analysis", "Options Trading", "Notification Subscription"])
+# Define the Investment Information markdown content
+investment_info_content = """
+# Info
+---
+
+## 1. Options Fundamentals
+
+### Call Options
+- **Definition:** A call option gives the buyer the **right, but not the obligation**, to purchase the underlying asset at a predetermined **strike price** on or before the expiration date.
+- **Example:** If you buy a call option for stock XYZ with a strike price of \$100 and a premium of \$5, and the stock rises to \$120, the intrinsic value is \$20 per share, netting you a profit of \$15 per share (ignoring transaction costs).
+
+### Put Options
+- **Definition:** A put option gives the buyer the **right, but not the obligation**, to sell the underlying asset at a predetermined **strike price** on or before the expiration date.
+- **Example:** If you buy a put option for stock XYZ with a strike price of \$100 and a premium of \$4, and the stock falls to \$80, the intrinsic value is \$20 per share, netting you a profit of \$16 per share.
+
+### Option Pricing Considerations
+- **Intrinsic Value and Time Value:** Options are priced based on the difference between the underlying asset's price and the strike price, as well as the time left until expiration.
+- **Volatility:** Higher volatility increases the premium due to a greater likelihood of favorable price movements.
+- **Pricing Models:** Black-Scholes and binomial models are commonly used to estimate option prices.
+
+---
+
+## 2. Hedging with Options
+
+### Protective Put
+- **Strategy:** Buy put options while holding the underlying asset to limit downside risk.
+- **Example:** Owning 100 shares of Company ABC at \$50 per share, you buy a put option at a \$50 strike for a \$2 premium. If the stock falls to \$40, the put option gains value, offsetting losses.
+
+### Covered Call
+- **Strategy:** Hold the underlying asset and sell call options to generate additional income.
+- **Example:** Owning shares at \$50, you sell a call option with a strike of \$55. If the stock remains below \$55, you keep both the shares and the premium.
+
+### Collar Strategy
+- **Strategy:** Combine buying a protective put and selling a covered call to create a range of acceptable prices.
+- **Example:** Buy a put at \$50 and sell a call at \$60 to limit both downside risk and upside potential.
+
+---
+
+## 3. Options Strategies
+
+### Butterfly Spread
+- **Overview:** A limited-risk, limited-reward strategy using three strike prices.
+- **Example:** Buy one call at \$90, sell two calls at \$100, and buy one call at \$110. Maximum profit is achieved if the underlying asset is at \$100 at expiration.
+
+### Condor Spread
+- **Overview:** Similar to the butterfly spread but with four strike prices, providing a wider profit zone.
+- **Example:** Buy calls at \$90 and \$120, sell calls at \$100 and \$110.
+
+### Bull and Bear Spreads
+- **Bull Spread (Call Spread):**  
+  - Buy a call at a lower strike and sell a call at a higher strike.  
+  - **Example:** Buy a call at \$100 and sell a call at \$110 if expecting a moderate rise.
+- **Bear Spread (Put Spread):**  
+  - Buy a put at a higher strike and sell a put at a lower strike.  
+  - **Example:** Buy a put at \$100 and sell a put at \$90 if expecting a moderate decline.
+
+### “Free Lunch” Strategies
+- **Overview:** Strategies like risk reversals that aim to create positions with minimal net premium.
+- **Example:** Sell a put while buying a call to create a synthetic long position with low upfront cost.
+
+---
+
+## 4. Financial Ratios and Metrics
+
+### Current Ratio
+- **Formula:** `Current Ratio = Current Assets / Current Liabilities`
+- **Interpretation:** A ratio above 1 indicates adequate short-term liquidity.
+
+### Debt to Equity Ratio
+- **Formula:** `Debt to Equity Ratio = Total Liabilities / Shareholders’ Equity`
+- **Interpretation:** A high ratio may indicate potential financial risk due to excessive borrowing.
+
+### Return on Equity (ROE)
+- **Formula:** `ROE = Net Income / Shareholders’ Equity`
+- **Interpretation:** Measures how effectively a company uses equity to generate profits.
+
+### Gross Profit Margin
+- **Formula:** `Gross Profit Margin = (Revenue - COGS) / Revenue`
+- **Interpretation:** Higher margins indicate better production efficiency or pricing power.
+
+### Net Profit Margin
+- **Formula:** `Net Profit Margin = Net Income / Revenue`
+- **Interpretation:** Reflects overall profitability after all expenses.
+
+### Return on Assets (ROA)
+- **Formula:** `ROA = Net Income / Average Total Assets`
+- **Interpretation:** Indicates how efficiently a company uses its assets to generate profit.
+
+### Cash Flow Ratio
+- **Formula:** `Cash Flow Ratio = Operating Cash Flow / Current Liabilities`
+- **Interpretation:** A ratio above 1 suggests strong liquidity from operating activities.
+"""
+
+# Sidebar Navigation including the new "Set Option Calls" page
+page = st.sidebar.radio("Navigation", 
+                          ["Stock Analysis", "Options Trading", "Notification Subscription", "Investment Information", "Set Option Calls"])
 st_autorefresh(interval=60 * 1000, key="real_time_refresh")
 
 ###############################################
@@ -293,7 +380,7 @@ if page == "Stock Analysis":
     st.markdown(
         """
         **Overview:**  
-        This page provides real‑time data and a comprehensive set of technical indicators:
+        This page provides real‑time data along with a comprehensive set of technical indicators:
         - **RSI (Relative Strength Index)**
         - **MACD (Moving Average Convergence Divergence)**
         - **Bollinger Bands**
@@ -302,16 +389,17 @@ if page == "Stock Analysis":
         - **ADX (Average Directional Index)**
         - **Pivot Points (PP, R1, S1)**
         - **Daily High/Low Levels**
-
         """
     )
     
     ticker_input = st.text_input("Enter Stock Ticker", value="AAPL")
     col1, col2 = st.columns(2)
     with col1:
-        period = st.selectbox("Select Data Period", options=["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"], index=0)
+        period = st.selectbox("Select Data Period", 
+                              options=["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"], index=0)
     with col2:
-        interval = st.selectbox("Select Data Interval", options=["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d"], index=0)
+        interval = st.selectbox("Select Data Interval", 
+                                options=["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d"], index=0)
     
     if st.button("Analyze Stock"):
         try:
@@ -356,6 +444,20 @@ if page == "Stock Analysis":
             ax_adx.legend()
             st.pyplot(fig_adx)
             
+            # Fundamental Metrics Display
+            st.subheader("Fundamental Analysis")
+            try:
+                ticker_obj = yf.Ticker(ticker_input)
+                info = ticker_obj.info
+                st.write("**Current Ratio:**", info.get("currentRatio", "N/A"))
+                st.write("**Debt to Equity Ratio:**", info.get("debtToEquity", "N/A"))
+                st.write("**Return on Equity (ROE):**", info.get("returnOnEquity", "N/A"))
+                st.write("**Gross Profit Margin:**", info.get("grossMargins", "N/A"))
+                st.write("**Net Profit Margin:**", info.get("profitMargins", "N/A"))
+                st.write("**Return on Assets (ROA):**", info.get("returnOnAssets", "N/A"))
+            except Exception as e:
+                st.error(f"Error fetching fundamental metrics: {e}")
+            
         except Exception as e:
             st.error(f"Error analyzing {ticker_input}: {e}")
 
@@ -374,7 +476,6 @@ elif page == "Options Trading":
         - Data will include Delta, Gamma, Theta (per day), Vega, Rho, and the estimated option price.
         - The graph below displays the Black–Scholes estimated option price as a function of strike price,
           with separate line plots for calls and puts, and the underlying price indicated.
-
         """
     )
     
@@ -476,7 +577,6 @@ elif page == "Notification Subscription":
         - **RSI > 65:** Overbought condition.
         
         The notification email will include current price, volume, SMAs, and RSI.
-        
         """
     )
     subscription_email = st.text_input("Enter Your Email Address", value="", key="notify_email")
@@ -498,6 +598,78 @@ elif page == "Notification Subscription":
             enhanced_notification(ticker_notify, subscription_email, period_notify, interval_notify)
         else:
             st.error("Please provide both an email and a ticker to monitor.")
+
+###############################################
+# PAGE 4: INVESTMENT INFORMATION
+###############################################
+elif page == "Investment Information":
+    st.header("Investment Information & Strategies")
+    st.markdown(investment_info_content, unsafe_allow_html=True)
+
+###############################################
+# PAGE 5: SET OPTION CALLS
+###############################################
+elif page == "Set Option Calls":
+    st.header("Set Option Calls")
+    st.markdown("### Place Your Option Call Order")
+    st.markdown("Fill out the details below to simulate your call option order.")
+    
+    # Use a form for inputting the option call parameters.
+    with st.form("option_call_form"):
+        ticker_call = st.text_input("Ticker", value="AAPL")
+        # Attempt to fetch the current price from yfinance; if unavailable, default to 100.
+        try:
+            ticker_obj_call = yf.Ticker(ticker_call)
+            current_data_call = ticker_obj_call.history(period="1d", interval="1m")
+            S_default = current_data_call["Close"].iloc[-1]
+        except Exception as e:
+            S_default = 100.0
+        S_call = st.number_input("Underlying Current Price (S)", value=float(S_default), step=0.1)
+        strike_call = st.number_input("Strike Price (K)", value=float(S_default * 1.05), step=0.1)
+        premium_call = st.number_input("Option Premium Paid", value=5.0, step=0.1)
+        days_to_expiration = st.number_input("Days to Expiration", value=30, min_value=1, step=1)
+        risk_free_rate = st.number_input("Risk-Free Interest Rate (annual, decimal)", value=0.01, step=0.001, format="%.3f")
+        implied_vol = st.number_input("Implied Volatility (annual, decimal)", value=0.20, step=0.01, format="%.2f")
+        num_contracts = st.number_input("Number of Contracts", value=1, min_value=1, step=1)
+        submit_option_call = st.form_submit_button("Simulate Option Call")
+    
+    if submit_option_call:
+        T_call = days_to_expiration / 365.0
+        # Calculate the Black-Scholes theoretical price and Greeks for a call option.
+        delta, gamma, theta, vega, rho, bs_price = black_scholes_greeks(S_call, strike_call, T_call, risk_free_rate, implied_vol, option_type='call')
+        st.subheader("Option Call Details and Greeks")
+        st.write(f"**Ticker:** {ticker_call}")
+        st.write(f"**Underlying Price (S):** {S_call}")
+        st.write(f"**Strike Price (K):** {strike_call}")
+        st.write(f"**Premium Paid:** {premium_call}")
+        st.write(f"**Days to Expiration:** {days_to_expiration}")
+        st.write(f"**Risk-Free Rate:** {risk_free_rate}")
+        st.write(f"**Implied Volatility:** {implied_vol}")
+        st.write(f"**Black-Scholes Theoretical Price:** {bs_price:.2f}")
+        st.write(f"**Delta:** {delta:.2f}")
+        st.write(f"**Gamma:** {gamma:.4f}")
+        st.write(f"**Theta (per day):** {theta:.4f}")
+        st.write(f"**Vega:** {vega:.2f}")
+        st.write(f"**Rho:** {rho:.2f}")
+        st.write(f"**Number of Contracts:** {num_contracts}")
+        
+        # Simulate the option payoff at expiration.
+        st.subheader("Simulated Payoff at Expiration")
+        contract_size = 100  # Standard option contract size (100 shares)
+        price_range = np.linspace(0.5 * S_call, 1.5 * S_call, 100)
+        # For a call option, payoff per share = max(price - strike, 0) - premium paid.
+        payoff = np.maximum(price_range - strike_call, 0) - premium_call  
+        total_payoff = payoff * contract_size * num_contracts
+        
+        # Plot the payoff profile.
+        fig_payoff, ax_payoff = plt.subplots(figsize=(10, 6))
+        ax_payoff.plot(price_range, total_payoff, label="Profit / Loss")
+        ax_payoff.axhline(0, color="black", linestyle="--")
+        ax_payoff.set_xlabel("Underlying Price at Expiration")
+        ax_payoff.set_ylabel("Profit / Loss ($)")
+        ax_payoff.set_title("Option Call Payoff at Expiration")
+        ax_payoff.legend()
+        st.pyplot(fig_payoff)
 
 # Uncomment the line below to enable auto-refresh if desired.
 # st_autorefresh(interval=60 * 1000, key="real_time_refresh")
