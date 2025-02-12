@@ -19,10 +19,54 @@ from scipy.stats import norm
 from streamlit_autorefresh import st_autorefresh
 import pandas_ta as ta
 
+st.set_page_config(page_title="ToFu´s Stock Analysis & Options Trading", layout="wide")
+###############################################
+# CUSTOM CSS
+###############################################
+st.markdown(
+    """
+    <style>
+    /* Main container with a bright gradient background */
+    .reportview-container {
+        background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    }
+    /* Sidebar with a bright teal background */
+    .sidebar .sidebar-content {
+        background-color: #e0f7fa;
+    }
+    /* Headings with a deep blue color */
+    h1, h2, h3, h4, h5, h6 {
+        color: #003366;
+    }
+    /* Buttons with a vibrant orange style */
+    .stButton>button {
+        background-color: #ff5722;
+        color: white;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+    .footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    color: #333;
+    text-align: center;
+    padding: 10px 0;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    }
+    </style>
+    
+    """,
+    unsafe_allow_html=True,
+)
+
+# Refresh the entire page every 15 seconds
+st_autorefresh(interval=15 * 1000, key="real_time_refresh")
+
 ###############################################
 # SECTION 1: TECHNICAL INDICATOR CALCULATIONS USING PANDAS_TA
 ###############################################
-
 def add_technical_indicators(data):
     """
     Uses pandas_ta to compute:
@@ -36,32 +80,24 @@ def add_technical_indicators(data):
     and adds daily high and low values.
     """
     try:
-        # RSI
         data["RSI"] = ta.rsi(data["Close"], length=14)
-        # MACD: returns MACD, Signal, Histogram
         macd = ta.macd(data["Close"], fast=12, slow=26, signal=9)
         data["MACD"] = macd["MACD_12_26_9"]
         data["Signal"] = macd["MACDs_12_26_9"]
         data["MACD_Hist"] = macd["MACDh_12_26_9"]
-        # Bollinger Bands
         bb = ta.bbands(data["Close"], length=20, std=2)
         data["BBL"] = bb["BBL_20_2.0"]
         data["BBM"] = bb["BBM_20_2.0"]
         data["BBU"] = bb["BBU_20_2.0"]
-        # Simple Moving Averages
         data["SMA20"] = ta.sma(data["Close"], length=20)
         data["SMA50"] = ta.sma(data["Close"], length=50)
         data["SMA200"] = ta.sma(data["Close"], length=200)
-        # VWAP (Volume Weighted Average Price)
         data["VWAP"] = ta.vwap(data["High"], data["Low"], data["Close"], data["Volume"])
-        # ADX (Average Directional Index)
         adx = ta.adx(data["High"], data["Low"], data["Close"], length=14)
         data["ADX"] = adx["ADX_14"]
-        # Pivot Points (manual calculation)
         data["PP"] = (data["High"] + data["Low"] + data["Close"]) / 3
         data["R1"] = 2 * data["PP"] - data["Low"]
         data["S1"] = 2 * data["PP"] - data["High"]
-        # Daily high and low (cumulative)
         data["Day_High"] = data["High"].cummax()
         data["Day_Low"] = data["Low"].cummin()
     except Exception as e:
@@ -71,15 +107,9 @@ def add_technical_indicators(data):
 ###############################################
 # SECTION 2: DATA FETCHING & PROCESSING FOR STOCKS
 ###############################################
-
 def fetch_stock_data(ticker, period="1d", interval="1m"):
     """
     Fetch historical stock data using yfinance and enrich it with technical indicators.
-    
-    Parameters:
-      ticker (str): Stock symbol.
-      period (str): Data period (e.g., "1d", "5d", "1mo", etc.).
-      interval (str): Data interval (e.g., "1m", "5m", "15m", etc.).
     """
     try:
         ticker_obj = yf.Ticker(ticker)
@@ -101,18 +131,9 @@ def fetch_stock_data(ticker, period="1d", interval="1m"):
 ###############################################
 # SECTION 3: BLACK-SCHOLES & GREEKS CALCULATIONS
 ###############################################
-
 def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
     """
     Compute Black-Scholes Greeks for a European option.
-    
-    Parameters:
-      S (float): Underlying asset price.
-      K (float): Strike price.
-      T (float): Time to expiration in years.
-      r (float): Risk-free interest rate (annualized, decimal).
-      sigma (float): Implied volatility (annualized, decimal).
-      option_type (str): 'call' or 'put'.
     """
     if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
         return (np.nan,)*6
@@ -148,13 +169,6 @@ def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
 def add_greeks(options_df, S, T, r=0.01, option_type='call'):
     """
     Add Black-Scholes Greeks to an options DataFrame.
-    
-    Parameters:
-      options_df (DataFrame): Options chain data (must include "strike" and "impliedVolatility").
-      S (float): Current underlying stock price.
-      T (float): Time to expiration in years.
-      r (float): Risk-free interest rate.
-      option_type (str): 'call' or 'put'.
     """
     def compute_row(row):
         if pd.notna(row.get("impliedVolatility", np.nan)):
@@ -171,14 +185,9 @@ def add_greeks(options_df, S, T, r=0.01, option_type='call'):
 ###############################################
 # SECTION 4: OPTIONS CHAIN DATA FETCHING
 ###############################################
-
 def get_option_chain(ticker, expiration=None):
     """
     Retrieve the options chain for the given ticker.
-    
-    Parameters:
-      ticker (str): Stock symbol.
-      expiration (str or None): Expiration date in YYYY-MM-DD. If None, uses the first available expiration.
     """
     try:
         ticker_obj = yf.Ticker(ticker)
@@ -193,19 +202,18 @@ def get_option_chain(ticker, expiration=None):
         return None, None, f"Error retrieving options chain: {e}"
 
 ###############################################
-# SECTION 5: ENHANCED EMAIL NOTIFICATIONS
+# SECTION 5: EMAIL NOTIFICATIONS & SMTP SERVER
 ###############################################
-
 def send_email_notification(to_email, subject, body):
     """
     Send an email notification using SMTP.
-    
-    **IMPORTANT:** Update SMTP_SERVER, SMTP_PORT, SMTP_USER, and SMTP_PASSWORD.
+    SMTP settings are taken from st.session_state if available.
     """
-    SMTP_SERVER = ""  
-    SMTP_PORT = 1
-    SMTP_USER = ""
-    SMTP_PASSWORD = ""
+    # Use configured SMTP settings if available, otherwise use placeholders.
+    SMTP_SERVER = st.session_state.get("SMTP_SERVER", "")
+    SMTP_PORT = st.session_state.get("SMTP_PORT", 587)
+    SMTP_USER = st.session_state.get("SMTP_USER", "")
+    SMTP_PASSWORD = st.session_state.get("SMTP_PASSWORD", "")
     FROM_EMAIL = SMTP_USER
 
     msg = MIMEMultipart()
@@ -228,9 +236,7 @@ def send_email_notification(to_email, subject, body):
 def enhanced_notification(ticker, email, period="1d", interval="1m"):
     """
     Check the latest stock data for the given ticker and send an email alert if RSI is critical.
-    
     Critical thresholds: RSI < 35 (Oversold) or RSI > 65 (Overbought).
-    The alert includes current price, volume, and key SMAs.
     """
     try:
         data = fetch_stock_data(ticker, period, interval)
@@ -270,107 +276,16 @@ def enhanced_notification(ticker, email, period="1d", interval="1m"):
 ###############################################
 # SECTION 6: STREAMLIT APP LAYOUT & MULTI-PAGE NAVIGATION
 ###############################################
-
-st.set_page_config(page_title="ToFu´s Stock Analysis & Options Trading", layout="wide")
-st.title("ToFu´s Stock Analysis & Options Trading")
-
-# Define the Investment Information markdown content
-investment_info_content = r"""
-# Info
----
-
-## 1. Options Fundamentals
-
-### Call Options
-- **Definition:** A call option gives the buyer the **right, but not the obligation**, to purchase the underlying asset at a predetermined **strike price** on or before the expiration date.
-- **Example:** If you buy a call option for stock XYZ with a strike price of \$100 and a premium of \$5, and the stock rises to \$120, the intrinsic value is \$20 per share, netting you a profit of \$15 per share (ignoring transaction costs).
-
-### Put Options
-- **Definition:** A put option gives the buyer the **right, but not the obligation**, to sell the underlying asset at a predetermined **strike price** on or before the expiration date.
-- **Example:** If you buy a put option for stock XYZ with a strike price of \$100 and a premium of \$4, and the stock falls to \$80, the intrinsic value is \$20 per share, netting you a profit of \$16 per share.
-
-### Option Pricing Considerations
-- **Intrinsic Value and Time Value:** Options are priced based on the difference between the underlying asset's price and the strike price, as well as the time left until expiration.
-- **Volatility:** Higher volatility increases the premium due to a greater likelihood of favorable price movements.
-- **Pricing Models:** Black-Scholes and binomial models are commonly used to estimate option prices.
-
----
-
-## 2. Hedging with Options
-
-### Protective Put
-- **Strategy:** Buy put options while holding the underlying asset to limit downside risk.
-- **Example:** Owning 100 shares of Company ABC at \$50 per share, you buy a put option at a \$50 strike for a \$2 premium. If the stock falls to \$40, the put option gains value, offsetting losses.
-
-### Covered Call
-- **Strategy:** Hold the underlying asset and sell call options to generate additional income.
-- **Example:** Owning shares at \$50, you sell a call option with a strike of \$55. If the stock remains below \$55, you keep both the shares and the premium.
-
-### Collar Strategy
-- **Strategy:** Combine buying a protective put and selling a covered call to create a range of acceptable prices.
-- **Example:** Buy a put at \$50 and sell a call at \$60 to limit both downside risk and upside potential.
-
----
-
-## 3. Options Strategies
-
-### Butterfly Spread
-- **Overview:** A limited-risk, limited-reward strategy using three strike prices.
-- **Example:** Buy one call at \$90, sell two calls at \$100, and buy one call at \$110. Maximum profit is achieved if the underlying asset is at \$100 at expiration.
-
-### Condor Spread
-- **Overview:** Similar to the butterfly spread but with four strike prices, providing a wider profit zone.
-- **Example:** Buy calls at \$90 and \$120, sell calls at \$100 and \$110.
-
-### Bull and Bear Spreads
-- **Bull Spread (Call Spread):**  
-  - Buy a call at a lower strike and sell a call at a higher strike.  
-  - **Example:** Buy a call at \$100 and sell a call at \$110 if expecting a moderate rise.
-- **Bear Spread (Put Spread):**  
-  - Buy a put at a higher strike and sell a put at a lower strike.  
-  - **Example:** Buy a put at \$100 and sell a put at \$90 if expecting a moderate decline.
-
-### “Free Lunch” Strategies
-- **Overview:** Strategies like risk reversals that aim to create positions with minimal net premium.
-- **Example:** Sell a put while buying a call to create a synthetic long position with low upfront cost.
-
----
-
-## 4. Financial Ratios and Metrics
-
-### Current Ratio
-- **Formula:** `Current Ratio = Current Assets / Current Liabilities`
-- **Interpretation:** A ratio above 1 indicates adequate short-term liquidity.
-
-### Debt to Equity Ratio
-- **Formula:** `Debt to Equity Ratio = Total Liabilities / Shareholders’ Equity`
-- **Interpretation:** A high ratio may indicate potential financial risk due to excessive borrowing.
-
-### Return on Equity (ROE)
-- **Formula:** `ROE = Net Income / Shareholders’ Equity`
-- **Interpretation:** Measures how effectively a company uses equity to generate profits.
-
-### Gross Profit Margin
-- **Formula:** `Gross Profit Margin = (Revenue - COGS) / Revenue`
-- **Interpretation:** Higher margins indicate better production efficiency or pricing power.
-
-### Net Profit Margin
-- **Formula:** `Net Profit Margin = Net Income / Revenue`
-- **Interpretation:** Reflects overall profitability after all expenses.
-
-### Return on Assets (ROA)
-- **Formula:** `ROA = Net Income / Average Total Assets`
-- **Interpretation:** Indicates how efficiently a company uses its assets to generate profit.
-
-### Cash Flow Ratio
-- **Formula:** `Cash Flow Ratio = Operating Cash Flow / Current Liabilities`
-- **Interpretation:** A ratio above 1 suggests strong liquidity from operating activities.
-"""
-
-# Sidebar Navigation including the new "Set Option Calls" page
-page = st.sidebar.radio("Navigation", 
-                          ["Stock Analysis", "Options Trading", "Notification Subscription", "Investment Information", "Set Option Calls"])
-st_autorefresh(interval=60 * 1000, key="real_time_refresh")
+pages = [
+    "Stock Analysis", 
+    "Watchlist", 
+    "Options Trading", 
+    "SMTP Server", 
+    "Notification Subscription", 
+    "Investment Information", 
+    "Set Option Calls"
+]
+page = st.sidebar.radio("Navigation", pages)
 
 ###############################################
 # PAGE 1: REAL‑TIME STOCK ANALYSIS
@@ -391,7 +306,17 @@ if page == "Stock Analysis":
         - **Daily High/Low Levels**
         """
     )
-    
+    if "auto_update" not in st.session_state:
+        st.session_state.auto_update = False
+
+    col_update1, col_update2 = st.columns(2)
+    with col_update1:
+        if st.button("Start Auto‑Update"):
+            st.session_state.auto_update = True
+    with col_update2:
+        if st.button("Stop Auto‑Update"):
+            st.session_state.auto_update = False
+
     ticker_input = st.text_input("Enter Stock Ticker", value="AAPL")
     col1, col2 = st.columns(2)
     with col1:
@@ -401,7 +326,7 @@ if page == "Stock Analysis":
         interval = st.selectbox("Select Data Interval", 
                                 options=["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d"], index=0)
     
-    if st.button("Analyze Stock"):
+    if st.session_state.auto_update:
         try:
             data = fetch_stock_data(ticker_input, period, interval)
             st.subheader(f"Intraday Data for {ticker_input} ({period}, {interval} interval)")
@@ -436,7 +361,7 @@ if page == "Stock Analysis":
             ax_macd.legend()
             st.pyplot(fig_indicators)
             
-            # ADX Chart
+            # ADX Chart.
             fig_adx, ax_adx = plt.subplots(figsize=(12, 4))
             ax_adx.plot(data.index, data["ADX"], label="ADX", color="brown")
             ax_adx.axhline(25, color="red", linestyle="--", label="Trend Threshold (25)")
@@ -444,7 +369,7 @@ if page == "Stock Analysis":
             ax_adx.legend()
             st.pyplot(fig_adx)
             
-            # Fundamental Metrics Display
+            # Fundamental Metrics Display.
             st.subheader("Fundamental Analysis")
             try:
                 ticker_obj = yf.Ticker(ticker_input)
@@ -460,9 +385,77 @@ if page == "Stock Analysis":
             
         except Exception as e:
             st.error(f"Error analyzing {ticker_input}: {e}")
+    else:
+        st.info("Click **Start Auto‑Update** to analyze the stock data automatically every 15 seconds.")
+
+    footer_html = """
+    <div class="footer">
+    <p>© 2025 Tobias Strauss</p>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
-# PAGE 2: OPTIONS TRADING & GREEKS (with Graph)
+# PAGE 2: WATCHLIST
+###############################################
+elif page == "Watchlist":
+    st.header("Watchlist")
+    st.markdown(
+        """
+        **Overview:**  
+        Add tickers to your watchlist and see their latest RSI values along with industry information.
+        You can also compare the RSI of each stock to the average RSI of its industry.
+        """
+    )
+    # Initialize watchlist in session state if not exists.
+    if "watchlist" not in st.session_state:
+        st.session_state.watchlist = []
+    
+    with st.form("add_watchlist_form"):
+        new_ticker = st.text_input("Enter Ticker to Add", value="AAPL")
+        add_button = st.form_submit_button("Add to Watchlist")
+    if add_button:
+        ticker_upper = new_ticker.strip().upper()
+        if ticker_upper and ticker_upper not in st.session_state.watchlist:
+            st.session_state.watchlist.append(ticker_upper)
+            st.success(f"{ticker_upper} added to watchlist!")
+        else:
+            st.info("Ticker is already in your watchlist or invalid.")
+    
+    # Option to clear the watchlist.
+    if st.button("Clear Watchlist"):
+        st.session_state.watchlist = []
+        st.info("Watchlist cleared!")
+    
+    if st.session_state.watchlist:
+        watchlist_data = []
+        for ticker in st.session_state.watchlist:
+            try:
+                # Use 1d and 1m interval for a quick refresh of current RSI.
+                data = fetch_stock_data(ticker, period="1d", interval="1m")
+                latest = data.iloc[-1]
+                current_rsi = latest["RSI"]
+                # Try to get industry info from ticker.info
+                info = yf.Ticker(ticker).info
+                industry = info.get("industry", "N/A")
+                watchlist_data.append({"Ticker": ticker, "Industry": industry, "RSI": current_rsi})
+            except Exception as e:
+                watchlist_data.append({"Ticker": ticker, "Industry": "Error", "RSI": np.nan})
+        df_watchlist = pd.DataFrame(watchlist_data)
+        
+        # Compute average RSI per industry if available.
+        if not df_watchlist.empty:
+            df_avg = df_watchlist.groupby("Industry")["RSI"].mean().reset_index().rename(columns={"RSI": "Industry Avg RSI"})
+            df_watchlist = pd.merge(df_watchlist, df_avg, on="Industry", how="left")
+        
+        st.dataframe(df_watchlist)
+    else:
+        st.info("Your watchlist is empty. Please add tickers.")
+    
+    st.markdown("### Built by Tobias Strauss ###")
+
+###############################################
+# PAGE 3: OPTIONS TRADING & GREEKS (with Graph)
 ###############################################
 elif page == "Options Trading":
     st.header("Options Trading Analysis & Greeks")
@@ -563,9 +556,37 @@ elif page == "Options Trading":
             
             fig.suptitle(f"Option Prices vs. Strike Price for Expiration: {expiration_info}", fontsize=16)
             st.pyplot(fig)
+    
+    st.markdown("### Built by Tobias Strauss ###")
 
 ###############################################
-# PAGE 3: NOTIFICATION SUBSCRIPTION & TESTING
+# PAGE 4: SMTP SERVER SETTINGS
+###############################################
+elif page == "SMTP Server":
+    st.header("SMTP Server Settings")
+    st.markdown(
+        """
+        **Configure your SMTP server settings for email notifications.**  
+        (Ensure you update these settings so that email notifications can be sent successfully.)
+        """
+    )
+    with st.form("smtp_form"):
+        smtp_server = st.text_input("SMTP Server", value=st.session_state.get("SMTP_SERVER", "smtp.example.com"))
+        smtp_port = st.number_input("SMTP Port", value=st.session_state.get("SMTP_PORT", 587), step=1)
+        smtp_user = st.text_input("SMTP Username", value=st.session_state.get("SMTP_USER", "your_email@example.com"))
+        smtp_password = st.text_input("SMTP Password", type="password", value=st.session_state.get("SMTP_PASSWORD", ""))
+        submit_smtp = st.form_submit_button("Save SMTP Settings")
+    if submit_smtp:
+        st.session_state.SMTP_SERVER = smtp_server
+        st.session_state.SMTP_PORT = smtp_port
+        st.session_state.SMTP_USER = smtp_user
+        st.session_state.SMTP_PASSWORD = smtp_password
+        st.success("SMTP settings saved!")
+    
+    st.markdown("### Built by Tobias Strauss ###")
+
+###############################################
+# PAGE 5: NOTIFICATION SUBSCRIPTION & TESTING
 ###############################################
 elif page == "Notification Subscription":
     st.header("RSI Notification Subscription")
@@ -598,16 +619,109 @@ elif page == "Notification Subscription":
             enhanced_notification(ticker_notify, subscription_email, period_notify, interval_notify)
         else:
             st.error("Please provide both an email and a ticker to monitor.")
+    
+    st.markdown("### Built by Tobias Strauss ###")
 
 ###############################################
-# PAGE 4: INVESTMENT INFORMATION
+# PAGE 6: INVESTMENT INFORMATION
 ###############################################
 elif page == "Investment Information":
-    st.header("Investment Information & Strategies")
+    investment_info_content = r"""
+    # Investment Analysis & Fundamentals
+    ---
+    
+    ## 1. Options Fundamentals
+    
+    ### Call Options
+    - **Definition:** A call option gives the buyer the **right, but not the obligation**, to purchase the underlying asset at a predetermined **strike price** on or before the expiration date.
+    - **Example:** If you buy a call option for stock XYZ with a strike price of \$100 and a premium of \$5, and the stock rises to \$120, the intrinsic value is \$20 per share, netting you a profit of \$15 per share (ignoring transaction costs).
+    
+    ### Put Options
+    - **Definition:** A put option gives the buyer the **right, but not the obligation**, to sell the underlying asset at a predetermined **strike price** on or before the expiration date.
+    - **Example:** If you buy a put option for stock XYZ with a strike price of \$100 and a premium of \$4, and the stock falls to \$80, the intrinsic value is \$20 per share, netting you a profit of \$16 per share.
+    
+    ### Option Pricing Considerations
+    - **Intrinsic Value and Time Value:** Options are priced based on the difference between the underlying asset's price and the strike price, as well as the time left until expiration.
+    - **Volatility:** Higher volatility increases the premium due to a greater likelihood of favorable price movements.
+    - **Pricing Models:** Black-Scholes and binomial models are commonly used to estimate option prices.
+    
+    ---
+    
+    ## 2. Hedging with Options
+    
+    ### Protective Put
+    - **Strategy:** Buy put options while holding the underlying asset to limit downside risk.
+    - **Example:** Owning 100 shares of Company ABC at \$50 per share, you buy a put option at a \$50 strike for a \$2 premium. If the stock falls to \$40, the put option gains value, offsetting losses.
+    
+    ### Covered Call
+    - **Strategy:** Hold the underlying asset and sell call options to generate additional income.
+    - **Example:** Owning shares at \$50, you sell a call option with a strike of \$55. If the stock remains below \$55, you keep both the shares and the premium.
+    
+    ### Collar Strategy
+    - **Strategy:** Combine buying a protective put and selling a covered call to create a range of acceptable prices.
+    - **Example:** Buy a put at \$50 and sell a call at \$60 to limit both downside risk and upside potential.
+    
+    ---
+    
+    ## 3. Options Strategies
+    
+    ### Butterfly Spread
+    - **Overview:** A limited-risk, limited-reward strategy using three strike prices.
+    - **Example:** Buy one call at \$90, sell two calls at \$100, and buy one call at \$110. Maximum profit is achieved if the underlying asset is at \$100 at expiration.
+    
+    ### Condor Spread
+    - **Overview:** Similar to the butterfly spread but with four strike prices, providing a wider profit zone.
+    - **Example:** Buy calls at \$90 and \$120, sell calls at \$100 and \$110.
+    
+    ### Bull and Bear Spreads
+    - **Bull Spread (Call Spread):**  
+      - Buy a call at a lower strike and sell a call at a higher strike.  
+      - **Example:** Buy a call at \$100 and sell a call at \$110 if expecting a moderate rise.
+    - **Bear Spread (Put Spread):**  
+      - Buy a put at a higher strike and sell a put at a lower strike.  
+      - **Example:** Buy a put at \$100 and sell a put at \$90 if expecting a moderate decline.
+    
+    ### “Free Lunch” Strategies
+    - **Overview:** Strategies like risk reversals that aim to create positions with minimal net premium.
+    - **Example:** Sell a put while buying a call to create a synthetic long position with low upfront cost.
+    
+    ---
+    
+    ## 4. Financial Ratios and Metrics
+    
+    ### Current Ratio
+    - **Formula:** `Current Ratio = Current Assets / Current Liabilities`
+    - **Interpretation:** A ratio above 1 indicates adequate short-term liquidity.
+    
+    ### Debt to Equity Ratio
+    - **Formula:** `Debt to Equity Ratio = Total Liabilities / Shareholders’ Equity`
+    - **Interpretation:** A high ratio may indicate potential financial risk due to excessive borrowing.
+    
+    ### Return on Equity (ROE)
+    - **Formula:** `ROE = Net Income / Shareholders’ Equity`
+    - **Interpretation:** Measures how effectively a company uses equity to generate profits.
+    
+    ### Gross Profit Margin
+    - **Formula:** `Gross Profit Margin = (Revenue - COGS) / Revenue`
+    - **Interpretation:** Higher margins indicate better production efficiency or pricing power.
+    
+    ### Net Profit Margin
+    - **Formula:** `Net Profit Margin = Net Income / Revenue`
+    - **Interpretation:** Reflects overall profitability after all expenses.
+    
+    ### Return on Assets (ROA)
+    - **Formula:** `ROA = Net Income / Average Total Assets`
+    - **Interpretation:** Indicates how efficiently a company uses its assets to generate profit.
+    
+    ### Cash Flow Ratio
+    - **Formula:** `Cash Flow Ratio = Operating Cash Flow / Current Liabilities`
+    - **Interpretation:** A ratio above 1 suggests strong liquidity from operating activities.
+    """
     st.markdown(investment_info_content, unsafe_allow_html=True)
+    st.markdown("### Built by Tobias Strauss ###")
 
 ###############################################
-# PAGE 5: SET OPTION CALLS
+# PAGE 7: SET OPTION CALLS
 ###############################################
 elif page == "Set Option Calls":
     st.header("Set Option Calls")
@@ -670,6 +784,5 @@ elif page == "Set Option Calls":
         ax_payoff.set_title("Option Call Payoff at Expiration")
         ax_payoff.legend()
         st.pyplot(fig_payoff)
-
-# Uncomment the line below to enable auto-refresh if desired.
-# st_autorefresh(interval=60 * 1000, key="real_time_refresh")
+    
+    st.markdown("### Built by Tobias Strauss ###")
