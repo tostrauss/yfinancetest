@@ -20,6 +20,8 @@ from streamlit_autorefresh import st_autorefresh
 import pandas_ta as ta
 
 st.set_page_config(page_title="ToFu´s Stock Analysis & Options Trading", layout="wide")
+st.title("ToFu´s Stock Analysis & Options Trading")
+
 ###############################################
 # CUSTOM CSS
 ###############################################
@@ -452,7 +454,12 @@ elif page == "Watchlist":
     else:
         st.info("Your watchlist is empty. Please add tickers.")
     
-    st.markdown("### Built by Tobias Strauss ###")
+    footer_html = """
+    <div class="footer">
+    <p>© 2025 Tobias Strauss</p>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
 # PAGE 3: OPTIONS TRADING & GREEKS (with Graph)
@@ -557,7 +564,12 @@ elif page == "Options Trading":
             fig.suptitle(f"Option Prices vs. Strike Price for Expiration: {expiration_info}", fontsize=16)
             st.pyplot(fig)
     
-    st.markdown("### Built by Tobias Strauss ###")
+    footer_html = """
+    <div class="footer">
+    <p>© 2025 Tobias Strauss</p>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
 # PAGE 4: SMTP SERVER SETTINGS
@@ -583,7 +595,12 @@ elif page == "SMTP Server":
         st.session_state.SMTP_PASSWORD = smtp_password
         st.success("SMTP settings saved!")
     
-    st.markdown("### Built by Tobias Strauss ###")
+    footer_html = """
+    <div class="footer">
+    <p>© 2025 Tobias Strauss</p>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
 # PAGE 5: NOTIFICATION SUBSCRIPTION & TESTING
@@ -620,7 +637,12 @@ elif page == "Notification Subscription":
         else:
             st.error("Please provide both an email and a ticker to monitor.")
     
-    st.markdown("### Built by Tobias Strauss ###")
+    footer_html = """
+    <div class="footer">
+    <p>© 2025 Tobias Strauss</p>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
 # PAGE 6: INVESTMENT INFORMATION
@@ -718,7 +740,12 @@ elif page == "Investment Information":
     - **Interpretation:** A ratio above 1 suggests strong liquidity from operating activities.
     """
     st.markdown(investment_info_content, unsafe_allow_html=True)
-    st.markdown("### Built by Tobias Strauss ###")
+    footer_html = """
+    <div class="footer">
+    <p>© 2025 Tobias Strauss</p>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
 # PAGE 7: SET OPTION CALLS
@@ -785,4 +812,9 @@ elif page == "Set Option Calls":
         ax_payoff.legend()
         st.pyplot(fig_payoff)
     
-    st.markdown("### Built by Tobias Strauss ###")
+    footer_html = """
+    <div class="footer">
+    <p>© 2025 Tobias Strauss</p>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
