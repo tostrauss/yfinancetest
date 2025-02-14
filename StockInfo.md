@@ -1,5 +1,5 @@
 ## 1. Options Fundamentals
-
+larstime
 Options are versatile financial instruments that provide an investor like yo
 with flexibility to speculate, hedge risk, or generate income. Two of the most common types are **Call Options** and **Put Options**.
 
