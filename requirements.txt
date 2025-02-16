@@ -1,0 +1,9 @@
+streamlit==1.30.0
+yfinance==0.2.35
+pandas==2.1.4
+numpy==1.26.2
+matplotlib==3.8.2
+scipy==1.11.3
+pandas-ta==0.3.14b
+streamlit-autorefresh==1.0.0
+transformers==4.48.3
