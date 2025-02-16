@@ -1,0 +1,40 @@
+[user]
+    name = Tobias Strauss
+    email = tobias.p.strauss@gmail.com
+
+[core]
+    editor = code --wait  # Use VSCode as default editor
+    autocrlf = input      # Normalize line endings for cross-platform compatibility
+
+[alias]
+    st = status
+    co = checkout
+    ci = commit
+    br = branch
+    lg = log --oneline --graph --decorate --all
+    amend = commit --amend
+    last = log -1 HEAD
+
+[push]
+    default = current
+
+[branch]
+    autosetuprebase = always
+
+[merge]
+    conflictstyle = diff3
+
+[pull]
+    rebase = true
+
+[color]
+    ui = true
+
+[credential]
+    helper = cache
+    # Use a credential manager for secure login (e.g., GitHub CLI)
+    # helper = manager-core  # Uncomment for Windows with Git Credential Manager
+
+[remote "origin"]
+    url = https://github.com/tostrauss/streamlit-stock-analysis.git
+    fetch = +refs/heads/*:refs/remotes/origin/*
