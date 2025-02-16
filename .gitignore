@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.env
+venv/
+*.sqlite3
+
+# Streamlit
+.streamlit/
+logs/
+logs/*.log
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+*.bak
+
+# Docker
+docker-compose.override.yml

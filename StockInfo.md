@@ -210,4 +210,7 @@ Cash Flow Ratio
 - An RSI leaving 30 going positive indicates "buy".
 - An RSI moving opposite of Stock-Price indicates potential reversal. 
 
-
+#####
+- 5 Pages (Name, Age, Risk Tolerance, How much do you want to invest per week, etc)
+- Alpaka
+- More features, different integrations

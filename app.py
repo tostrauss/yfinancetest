@@ -63,8 +63,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Refresh the entire page every 15 seconds
-st_autorefresh(interval=15 * 1000, key="real_time_refresh")
+# Refresh the entire page every 20 seconds
+st_autorefresh(interval=20 * 1000, key="real_time_refresh")
 
 ###############################################
 # SECTION 1: TECHNICAL INDICATOR CALCULATIONS USING PANDAS_TA
