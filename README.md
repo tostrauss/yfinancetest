@@ -1,85 +1,98 @@
-# ToFu´s Stock Analysis and Option Trading
+ToFu’s Stock Analysis & Options Trading - README.md
 
-**ToFu´s Stock Analysis and Option Trading** is a comprehensive, multi-page web application designed for traders and financial analysts by Tobias Strauss. Built with [Streamlit](https://streamlit.io/) and powered by live data from [Yahoo Finance](https://finance.yahoo.com/), this application provides real-time stock analysis and options trading with technical indicators and Black–Scholes-based Greeks calculations. Any recommendations etc. welcome.
+🚀 Key Features Overview
 
-## Table of Contents
+📊 Real-Time Stock Analysis
 
-- [Overview](#overview)
-- [Features](#features)
-- [GitHub Download & Installation](#github-download--installation)
-- [Usage](#usage)
-- [Pages Overview](#pages-overview)
-  - [1. Stock Analysis](#1-stock-analysis)
-  - [2. Options Trading](#2-options-trading)
-  - [3. Notification Subscription](#3-notification-subscription)
-- [Configuration](#configuration)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+Displays live stock prices with technical indicators from pandas-ta:
 
-## Overview
+RSI: Detects overbought/oversold signals.
 
-*ToFu´s Stock Analysis and Option Trading* is an all‑in‑one tool that caters to both equity and options traders. The application delivers:
+MACD: Highlights trend momentum.
 
-- **Real-time stock data** with technical indicators such as RSI, MACD, Bollinger Bands, and multiple Simple Moving Averages (SMA20, SMA50, SMA200).
-- **Options chain analysis** with detailed Black–Scholes Greeks (Delta, Gamma, Theta, Vega, Rho) and estimated option prices.
-- A **visual dashboard** that includes interactive charts and graphs for both stock prices and option pricing.
-- An **email notification system** to alert you when key technical indicators (e.g., RSI) breach predefined thresholds.
+Bollinger Bands: Shows price volatility.
 
-## Features
+SMA (20, 50, 200-day): Reveals short- and long-term trends.
 
-- **Real-Time Stock Analysis**  
-  - Displays live intraday data (e.g., AAPL with a 1‑day period at 1‑minute intervals).
-  - Computes and plots technical indicators: RSI, MACD, Bollinger Bands, and SMAs.
-  - Shows daily high/low values and supports multiple intervals and periods.
-  
-- **Options Trading Analysis**  
-  - Retrieves available options expiration dates and lets you select one.
-  - Fetches options chain data and calculates Black–Scholes Greeks.
-  - Provides detailed tables for call and put options.
-  - Includes a dual-panel graph:
-    - One panel for call options and one for put options.
-    - Each panel shows a smooth line plot of Black–Scholes estimated option prices versus strike prices.
-    - A vertical dashed line indicates the current underlying price.
-  
-- **Notification Subscription**  
-  - Allows you to subscribe for email alerts when a stock’s RSI crosses critical thresholds (RSI < 35 or RSI > 65).
-  - Email alerts include detailed metrics like current price, volume, and key moving averages.
-  
-- **Robust Error Handling & Troubleshooting**  
-  - Detailed error messages and troubleshooting output.
-  - Flexible configuration options to suit various trading strategies.
+VWAP: Indicates fair market value.
 
-## GitHub Download & Installation
+ADX: Measures trend strength.
 
-### Download from GitHub
+Pivot Points: Identifies support and resistance.
 
-You can download *ToFu´s Stock Analysis and Option Trading* from GitHub in two ways:
+✅ Interactive Watchlist
 
-1. **Clone the Repository**  
-   Open your terminal or command prompt and run:
-   ```bash
-   git clone https://github.com/tostrauss/ToFu-Stock-Analysis-Option-Trading.git
-   cd ToFu-Stock-Analysis-Option-Trading
+Add favorite stocks to your personal watchlist.
 
-## Installation
+View live RSI values and compare against industry averages.
 
-Make sure you have Python 3.7 or later installed, then dependencies:
-pip install streamlit yfinance pandas numpy matplotlib scripy
+💹 Options Trading & Black-Scholes Analysis
 
-## Usage
+Retrieves options chains using yfinance.
 
-Just run the following command in your terminal:
-streamlit run app.py
+Calculates Black-Scholes option pricing and Greeks:
 
-## Contributing
-More than welcome! Just fork and submit pull requests :)
+Delta, Gamma, Theta, Vega, Rho with estimated option price.
 
-## License 
-This project is licensed under the MIT License. 
+Displays option pricing with interactive charts.
 
-## Contact
-- Name: Tobias Strauss
-- Email: tobias.p.strauss@gmail.com
+📧 Automated Email Alerts for RSI
+
+Sends alerts if RSI > 65 (Overbought) or RSI < 35 (Oversold).
+
+Configurable SMTP settings for customized notifications.
+
+📖 Investment Learning Hub
+
+Explains options strategies: Covered Calls, Protective Puts, Spreads.
+
+Breaks down essential financial metrics: ROE, Profit Margins, Debt-to-Equity.
+
+🧮 Options Call Simulations
+
+Simulates call option payoffs with adjustable parameters.
+
+Displays profit/loss charts for easy strategy analysis.
+
+🗂️ Intuitive Multi-Page Navigation
+
+Navigate easily between pages:
+
+Stock Analysis, Watchlist, Options Trading
+
+SMTP Setup, RSI Alerts, Learning Hub, Call Simulations
+
+🛠️ Setup & Installation
+
+1️⃣ Install Dependencies:
+
+git clone https://github.com/tostrauss/streamlit-stock-analysis.git
+cd streamlit-stock-analysis
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+2️⃣ Run the Application:
+
+streamlit run streamlit_app.py
+
+3️⃣ Docker Option:
+
+docker-compose up --build
+
+✉️ Sample Email Alert:
+
+Subject: Stock Alert for AAPL - RSI Alert
+
+Ticker: AAPL
+Current Price: $179.25
+Volume: 2,150,000
+SMA20: $175.43 | SMA50: $172.80 | SMA200: $165.20
+RSI: 68.45 (Overbought)
+
+📜 License
+
+This project is licensed under the MIT License.
+
+Created with ❤️ by Tobias Strauss 🚀
 
