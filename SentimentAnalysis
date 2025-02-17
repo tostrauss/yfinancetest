@@ -1,0 +1,74 @@
+#Last edit: Hayden Hall
+#Purpose: analyze movie ratings and give them a score; goal is to modify to provide sentiment analysis for headlines
+
+import re
+from collections import defaultdict
+
+def make_word_sentiment_dictionary(file_name):
+    #initialize dictionary
+    word_dict = defaultdict(lambda: {'count': 0, 'total_score': 0, 'average_score': 0.0})
+
+    with open(file_name, 'r') as file:
+        for line in file: #Splits each line into seperate rating and review
+            parts = line.strip().split(maxsplit=1)
+            if len(parts) <2:
+                continue
+            rating = int(parts[0])
+            review_text = parts[1]
+
+            #makes text lowercase and ignores punctuation; easier to read
+            words = re.findall(r'\w+', review_text.lower())
+
+            for word in words:
+                word_data = word_dict[word]
+                word_data ['count'] +=1
+                word_data ['total_score'] += rating
+
+    for word, data in word_dict.items(): #gets average score for each word
+        data['average_score'] = data['total_score'] / data['count']
+    return dict(word_dict)
+
+def predict_sentiment_score(words):
+    words = re.findall(r'\w+', words.lower()) #lowercase and ignores punctuation
+    total_score = 0
+    word_count = 0
+   
+    for word in words: #gets each word's average score to add to total score
+        score = word_sentiment_dictionary[word]['average_score'] if word in word_sentiment_dictionary else 2
+        total_score += score
+        word_count += 1
+
+    #Get the average and return the value
+    return total_score / word_count
+
+def is_positive(words, word_sentiment_dict):
+    if predict_sentiment_score(words) > 2.1: #Tweaked from 2.0 to 2.1 and got > 75% accuracy (For headline or article analysis will want to change based on historical data
+        return True
+    else:
+        return False
+## Evaluation
+
+def evaluate(word_sentiment_dict, filename):
+    f = open(filename, "r")
+    correct = 0
+    incorrect = 0
+    for line in f:
+        line = line.strip()
+        score = int(line[0])
+        words = line[2:]
+        predicted_positive = is_positive(words, word_sentiment_dict)
+        if score > 2 and predicted_positive:
+            correct += 1
+        elif score <= 2 and not predicted_positive:
+            correct += 1
+        else:
+            incorrect += 1
+    f.close()
+    print("predicted correctly:", correct, "("+str(correct/(correct+incorrect))+")")
+    print("predicted incorrectly:", incorrect, "("+str(incorrect/(correct+incorrect))+")")
+
+    #my only global variable
+word_sentiment_dictionary = make_word_sentiment_dictionary("movie_reviews_training.txt") #Would need to replace this with headline text
+
+#Begin testing
+evaluate(word_sentiment_dictionary, "movie_reviews_dev.txt") #Replace with correct txt and sentiment 
