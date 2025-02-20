@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
@@ -39,15 +40,17 @@ wrapper_function(args)
 
   return buildvalue
 
-Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
-Copyright 2011 -- present NumPy Developers.
+Copyright 1999,2000 Pearu Peterson all rights reserved,
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
+$Date: 2005/08/30 08:58:42 $
+Pearu Peterson
+
 """
-import os
-import sys
+import os, sys
 import time
 import copy
 from pathlib import Path
@@ -236,20 +239,10 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 #initcommonhooks#
 #interface_usercode#
 
-#if Py_GIL_DISABLED
-    // signal whether this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m , #gil_used#);
-#endif
-
 #ifdef F2PY_REPORT_ATEXIT
     if (! PyErr_Occurred())
         on_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-
-    if (PyType_Ready(&PyFortran_Type) < 0) {
-        return NULL;
-    }
-
     return m;
 }
 #ifdef __cplusplus
@@ -464,7 +457,7 @@ rout_rules = [
     {
       extern #ctype# #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
-      tmp = F2PyCapsule_FromVoidPtr((void*)#F_WRAPPEDFUNC#(#name_lower#,#NAME#),NULL);
+      tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
       s = PyUnicode_FromString("#name#");
