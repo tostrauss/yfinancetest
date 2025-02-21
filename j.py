@@ -23,37 +23,18 @@ from scipy.stats import norm
 # HELPER FUNCTIONS & SETUP
 # -------------------------------
 
-
 def add_technical_indicators(data):
-    if data is None or data.empty:
-        return data
-    # Ensure required columns are filled to avoid None values.
-    for col in ["close", "high", "low"]:
-        if col in data.columns:
-            data[col] = data[col].ffill()  # use ffill() instead of fillna(method='ffill')
-    
     try:
         data["RSI"] = ta.rsi(data["close"], length=14)
-        
         macd = ta.macd(data["close"], fast=12, slow=26, signal=9)
-        if macd is not None:
-            data["MACD"] = macd.get("MACD_12_26_9", np.nan)
-            data["Signal"] = macd.get("MACDs_12_26_9", np.nan)
-            data["MACD_Hist"] = macd.get("MACDh_12_26_9", np.nan)
-        else:
-            data["MACD"] = np.nan
-            data["Signal"] = np.nan
-            data["MACD_Hist"] = np.nan
+        data["MACD"] = macd["MACD_12_26_9"]
+        data["Signal"] = macd["MACDs_12_26_9"]
+        data["MACD_Hist"] = macd["MACDh_12_26_9"]
 
         bb = ta.bbands(data["close"], length=20, std=2)
-        if bb is not None:
-            data["BBL"] = bb.get("BBL_20_2.0", np.nan)
-            data["BBM"] = bb.get("BBM_20_2.0", np.nan)
-            data["BBU"] = bb.get("BBU_20_2.0", np.nan)
-        else:
-            data["BBL"] = np.nan
-            data["BBM"] = np.nan
-            data["BBU"] = np.nan
+        data["BBL"] = bb["BBL_20_2.0"]
+        data["BBM"] = bb["BBM_20_2.0"]
+        data["BBU"] = bb["BBU_20_2.0"]
 
         data["SMA20"] = ta.sma(data["close"], length=20)
         data["SMA50"] = ta.sma(data["close"], length=50)
@@ -63,23 +44,19 @@ def add_technical_indicators(data):
             data["VWAP"] = ta.vwap(data["high"], data["low"], data["close"], data["volume"])
 
         adx = ta.adx(data["high"], data["low"], data["close"], length=14)
-        if adx is not None:
-            data["ADX"] = adx.get("ADX_14", np.nan)
-        else:
-            data["ADX"] = np.nan
+        data["ADX"] = adx["ADX_14"]
 
+        # Simple Pivot Points (Daily)
         data["PP"] = (data["high"] + data["low"] + data["close"]) / 3
         data["R1"] = 2 * data["PP"] - data["low"]
         data["S1"] = 2 * data["PP"] - data["high"]
 
+        # Day High/Low (cumulative)
         data["Day_High"] = data["high"].cummax()
         data["Day_Low"] = data["low"].cummin()
     except Exception as e:
         print(f"Error adding technical indicators: {e}")
     return data
-
-
-
 
 def fetch_stock_data(ticker, period="1d", interval="1m"):
     try:
@@ -380,98 +357,17 @@ def notification_subscription_layout():
 def investment_information_layout():
     return dbc.Container([
         dcc.Markdown(r"""
- # Investment Analysis & Fundamentals
-    ---
-    
-    ## 1. Options Fundamentals
-    
-    ### Call Options
-    - **Definition:** A call option gives the buyer the **right, but not the obligation**, to purchase the underlying asset at a predetermined **strike price** on or before the expiration date.
-    - **Example:** If you buy a call option for stock XYZ with a strike price of \$100 and a premium of \$5, and the stock rises to \$120, the intrinsic value is \$20 per share, netting you a profit of \$15 per share (ignoring transaction costs).
-    
-    ### Put Options
-    - **Definition:** A put option gives the buyer the **right, but not the obligation**, to sell the underlying asset at a predetermined **strike price** on or before the expiration date.
-    - **Example:** If you buy a put option for stock XYZ with a strike price of \$100 and a premium of \$4, and the stock falls to \$80, the intrinsic value is \$20 per share, netting you a profit of \$16 per share.
-    
-    ### Option Pricing Considerations
-    - **Intrinsic Value and Time Value:** Options are priced based on the difference between the underlying asset's price and the strike price, as well as the time left until expiration.
-    - **Volatility:** Higher volatility increases the premium due to a greater likelihood of favorable price movements.
-    - **Pricing Models:** Black-Scholes and binomial models are commonly used to estimate option prices.
-    
-    ---
-    
-    ## 2. Hedging with Options
-    
-    ### Protective Put
-    - **Strategy:** Buy put options while holding the underlying asset to limit downside risk.
-    - **Example:** Owning 100 shares of Company ABC at \$50 per share, you buy a put option at a \$50 strike for a \$2 premium. If the stock falls to \$40, the put option gains value, offsetting losses.
-    
-    ### Covered Call
-    - **Strategy:** Hold the underlying asset and sell call options to generate additional income.
-    - **Example:** Owning shares at \$50, you sell a call option with a strike of \$55. If the stock remains below \$55, you keep both the shares and the premium.
-    
-    ### Collar Strategy
-    - **Strategy:** Combine buying a protective put and selling a covered call to create a range of acceptable prices.
-    - **Example:** Buy a put at \$50 and sell a call at \$60 to limit both downside risk and upside potential.
-    
-    ---
-    
-    ## 3. Options Strategies
-    
-    ### Butterfly Spread
-    - **Overview:** A limited-risk, limited-reward strategy using three strike prices.
-    - **Example:** Buy one call at \$90, sell two calls at \$100, and buy one call at \$110. Maximum profit is achieved if the underlying asset is at \$100 at expiration.
-    
-    ### Condor Spread
-    - **Overview:** Similar to the butterfly spread but with four strike prices, providing a wider profit zone.
-    - **Example:** Buy calls at \$90 and \$120, sell calls at \$100 and \$110.
-    
-    ### Bull and Bear Spreads
-    - **Bull Spread (Call Spread):**  
-      - Buy a call at a lower strike and sell a call at a higher strike.  
-      - **Example:** Buy a call at \$100 and sell a call at \$110 if expecting a moderate rise.
-    - **Bear Spread (Put Spread):**  
-      - Buy a put at a higher strike and sell a put at a lower strike.  
-      - **Example:** Buy a put at \$100 and sell a put at \$90 if expecting a moderate decline.
-    
-    ### “Free Lunch” Strategies
-    - **Overview:** Strategies like risk reversals that aim to create positions with minimal net premium.
-    - **Example:** Sell a put while buying a call to create a synthetic long position with low upfront cost.
-    
-    ---
-    
-    ## 4. Financial Ratios and Metrics
-    
-    ### Current Ratio
-    - **Formula:** `Current Ratio = Current Assets / Current Liabilities`
-    - **Interpretation:** A ratio above 1 indicates adequate short-term liquidity.
-    
-    ### Debt to Equity Ratio
-    - **Formula:** `Debt to Equity Ratio = Total Liabilities / Shareholders’ Equity`
-    - **Interpretation:** A high ratio may indicate potential financial risk due to excessive borrowing.
-    
-    ### Return on Equity (ROE)
-    - **Formula:** `ROE = Net Income / Shareholders’ Equity`
-    - **Interpretation:** Measures how effectively a company uses equity to generate profits.
-    
-    ### Gross Profit Margin
-    - **Formula:** `Gross Profit Margin = (Revenue - COGS) / Revenue`
-    - **Interpretation:** Higher margins indicate better production efficiency or pricing power.
-    
-    ### Net Profit Margin
-    - **Formula:** `Net Profit Margin = Net Income / Revenue`
-    - **Interpretation:** Reflects overall profitability after all expenses.
-    
-    ### Return on Assets (ROA)
-    - **Formula:** `ROA = Net Income / Average Total Assets`
-    - **Interpretation:** Indicates how efficiently a company uses its assets to generate profit.
-    
-    ### Cash Flow Ratio
-    - **Formula:** `Cash Flow Ratio = Operating Cash Flow / Current Liabilities`
-    - **Interpretation:** A ratio above 1 suggests strong liquidity from operating activities.
-                     
-    ### -             
-    """)
+# Investment Analysis & Fundamentals
+---
+## 1. Options Fundamentals
+- Gives the right to buy or sell an asset at a predetermined price.
+## 2. Hedging with Options
+- Protective Put, Covered Call, Collar Strategy.
+## 3. Options Strategies
+- Butterfly Spread, Condor Spread.
+## 4. Financial Ratios and Metrics
+- Current Ratio, Debt to Equity, ROE, Gross/Net Profit Margins, ROA.
+        """)
     ], fluid=True)
 
 def set_option_calls_layout():
