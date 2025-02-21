@@ -9,3 +9,9 @@ scipy==1.11.3
 streamlit-autorefresh==1.0.0
 transformers==4.49.0
 requests==2.32.3
+beautifulsoup4==4.10.0
+dash==2.0.0
+dash-bootstrap-components==1.0.0
+plotly==5.15.0
+
+

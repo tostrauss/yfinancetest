@@ -27,7 +27,7 @@ st.title("ToFu´s Stock Analysis & Options Trading")
 ###############################################
 st.markdown(
     """
-    <style>
+    <style>!
     /* Main container with a bright gradient background */
     .reportview-container {
         background: linear-gradient(135deg, #fdfbfb, #ebedee);
@@ -119,6 +119,8 @@ def fetch_stock_data(ticker, period="1d", interval="1m"):
         if data.empty:
             raise ValueError(f"No data returned for ticker: {ticker}")
         data.index = data.index.tz_localize(None)
+        st.write(f"Fetched data for {ticker}:")
+        st.write(data.head())
     except Exception as e:
         st.error(f"Error fetching data for {ticker}: {e}")
         raise
