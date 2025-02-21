@@ -1,3 +1,4 @@
+import os
 import alpaca_trade_api as tradeapi
 import pandas as pd
 import numpy as np
@@ -62,9 +63,21 @@ st.markdown(
 )
 
 ###############################################
+# LOAD FOOTER FROM EXTERNAL FILE
+###############################################
+def load_footer():
+    if os.path.exists("footer.html"):
+        with open("footer.html", "r") as f:
+            return f.read()
+    else:
+        # Fallback footer if file not found.
+        return '<div class="footer"><p>© 2025 Tobias Strauss</p></div>'
+
+footer_html = load_footer()
+
+###############################################
 # ALPACA API SETTINGS & HELPER FUNCTION
 ###############################################
-# Set your Alpaca API credentials (or build a settings page for these)
 if "ALPACA_API_KEY" not in st.session_state:
     st.session_state.ALPACA_API_KEY = "AKAZIT5RT3SU1KNI8OQN"
 if "ALPACA_API_SECRET" not in st.session_state:
@@ -85,7 +98,6 @@ def get_alpaca_api():
 ###############################################
 def add_technical_indicators(data):
     try:
-        # Expecting lower-case column names: close, high, low, volume
         data["RSI"] = ta.rsi(data["close"], length=14)
         macd = ta.macd(data["close"], fast=12, slow=26, signal=9)
         data["MACD"] = macd["MACD_12_26_9"]
@@ -112,10 +124,9 @@ def add_technical_indicators(data):
     return data
 
 ###############################################
-# SECTION 2: DATA FETCHING & PROCESSING FOR STOCKS
+# SECTION 2: DATA FETCHING & PROCESSING FOR STOCKS (and crypto/bond data via yfinance)
 ###############################################
 def fetch_stock_data(ticker, period="1d", interval="1m"):
-    # First, try to use Alpaca’s API
     try:
         api = get_alpaca_api()
         now = datetime.datetime.now()
@@ -138,7 +149,7 @@ def fetch_stock_data(ticker, period="1d", interval="1m"):
         elif period == "10y":
             start = now - datetime.timedelta(days=3650)
         elif period == "max":
-            start = now - datetime.timedelta(days=3650)  # adjust as needed
+            start = now - datetime.timedelta(days=3650)
         else:
             start = now - datetime.timedelta(days=1)
         end = now
@@ -146,15 +157,14 @@ def fetch_stock_data(ticker, period="1d", interval="1m"):
         start_iso = start.isoformat()
         end_iso = end.isoformat()
 
-        # Map Streamlit interval to Alpaca’s accepted timeframe
         interval_mapping = {
             "1m": "1Min",
-            "2m": "1Min",  # approximate
+            "2m": "1Min",
             "5m": "5Min",
             "15m": "15Min",
-            "30m": "15Min",  # approximate
+            "30m": "15Min",
             "60m": "1Hour",
-            "90m": "1Hour",  # approximate
+            "90m": "1Hour",
             "1h": "1Hour",
             "1d": "1Day"
         }
@@ -162,7 +172,6 @@ def fetch_stock_data(ticker, period="1d", interval="1m"):
         bars = api.get_bars(ticker, alpaca_interval, start_iso, end_iso).df
         if bars.empty:
             raise ValueError(f"No data returned for ticker: {ticker}")
-        # Alpaca returns columns in lowercase.
         bars.index = pd.to_datetime(bars.index).tz_localize(None)
         data = bars.copy()
     except Exception as e:
@@ -172,7 +181,6 @@ def fetch_stock_data(ticker, period="1d", interval="1m"):
             data = ticker_obj.history(period=period, interval=interval)
             if data.empty:
                 raise ValueError(f"No data returned for ticker: {ticker}")
-            # Convert column names to lower-case so our technical analysis functions work uniformly.
             data.columns = [col.lower() for col in data.columns]
             data.index = data.index.tz_localize(None)
         except Exception as e2:
@@ -314,7 +322,7 @@ def enhanced_notification(ticker, email, period="1d", interval="1m"):
         st.error(f"Error during notification: {e}")
 
 ###############################################
-# NEW SECTION: METRICS & SENTIMENT ANALYSIS FUNCTIONS
+# SECTION 6: METRICS & SENTIMENT ANALYSIS FUNCTIONS
 ###############################################
 @st.cache_resource(show_spinner=False)
 def load_finbert():
@@ -395,7 +403,7 @@ def generate_trading_signal(rsi, avg_sentiment, rsi_buy=30, rsi_sell=70, sentime
         return "HOLD"
 
 ###############################################
-#BROKER ORDER FUNCTION FOR STOCKS USING ALPACA
+# SECTION 7: BROKER ORDER FUNCTION FOR STOCKS USING ALPACA
 ###############################################
 def place_order(symbol, qty, side, order_type, time_in_force):
     api = get_alpaca_api()
@@ -412,7 +420,7 @@ def place_order(symbol, qty, side, order_type, time_in_force):
         st.error(f"Error placing order: {e}")
 
 ###############################################
-# SECTION 6: STREAMLIT APP LAYOUT & MULTI-PAGE NAVIGATION
+# SECTION 8: STREAMLIT APP LAYOUT & MULTI-PAGE NAVIGATION
 ###############################################
 pages = [
     "Stock Analysis", 
@@ -423,11 +431,12 @@ pages = [
     "Investment Information", 
     "Set Option Calls",
     "Risk/Reward Calculator",
-    "Metrics & Sentiment Tracker"
+    "Metrics & Sentiment Tracker",
+    "Bond Analysis",
+    "Crypto Analysis"
 ]
     
 page = st.sidebar.selectbox("Select Page", pages)   
-# Only auto-refresh if not on the Metrics & Sentiment Tracker page.
 if page != "Metrics & Sentiment Tracker":
     st_autorefresh(interval=15 * 1000, key="real_time_refresh_unique")
 
@@ -508,7 +517,6 @@ if page == "Stock Analysis":
             
             st.subheader("Fundamental Analysis")
             try:
-                # Use yfinance for fundamental metrics.
                 ticker_obj = yf.Ticker(ticker_input)
                 info = ticker_obj.info
                 st.write("**Current Ratio:**", info.get("currentRatio", "N/A"))
@@ -525,11 +533,6 @@ if page == "Stock Analysis":
     else:
         st.info("Click **Start Auto‑Update** to analyze the stock data automatically every 15 seconds.")
 
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
     st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
@@ -540,7 +543,6 @@ elif page == "Watchlist":
     st.markdown("""
         **Overview:**  
         Add tickers to your watchlist and see their latest RSI values along with industry information.
-        You can also compare the RSI of each stock to the average RSI of its industry.
     """)
     if "watchlist" not in st.session_state:
         st.session_state.watchlist = []
@@ -580,11 +582,6 @@ elif page == "Watchlist":
     else:
         st.info("Your watchlist is empty. Please add tickers.")
 
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
     st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
@@ -594,13 +591,6 @@ elif page == "Options Trading":
     st.header("Options Trading Analysis & Greeks")
     st.markdown("""
         Retrieve and analyze options chain data including Black–Scholes Greeks.
-        
-        **Instructions:**
-        - Enter the ticker below.
-        - The app will fetch the list of available expiration dates (via yfinance).
-        - Data will include Delta, Gamma, Theta (per day), Vega, Rho, and the estimated option price.
-        - The graph below displays the Black–Scholes estimated option price as a function of strike price,
-          with separate line plots for calls and puts, and the underlying price indicated.
     """)
     
     ticker_option = st.text_input("Enter Stock Ticker for Options", value="AAPL", key="option_ticker")
@@ -680,11 +670,6 @@ elif page == "Options Trading":
             fig.suptitle(f"Option Prices vs. Strike Price for Expiration: {expiration_info}", fontsize=16)
             st.pyplot(fig)
 
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
     st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
@@ -693,8 +678,7 @@ elif page == "Options Trading":
 elif page == "SMTP Server":
     st.header("SMTP Server Settings")
     st.markdown("""
-        **Configure your SMTP server settings for email notifications.**  
-        (Ensure you update these settings so that email notifications can be sent successfully.)
+        **Configure your SMTP server settings for email notifications.**
     """)
     with st.form("smtp_form"):
         smtp_server = st.text_input("SMTP Server", value=st.session_state.get("SMTP_SERVER", "smtp.example.com"))
@@ -709,11 +693,6 @@ elif page == "SMTP Server":
         st.session_state.SMTP_PASSWORD = smtp_password
         st.success("SMTP settings saved!")
 
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
     st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
@@ -722,12 +701,7 @@ elif page == "SMTP Server":
 elif page == "Notification Subscription":
     st.header("RSI Notification Subscription")
     st.markdown("""
-        Subscribe to receive email notifications when RSI crosses critical thresholds:
-        
-        - RSI < 35: Oversold condition.
-        - RSI > 65: Overbought condition.
-        
-        The notification email will include current price, volume, SMAs, and RSI.
+        Subscribe to receive email notifications when RSI crosses critical thresholds.
     """)
     subscription_email = st.text_input("Enter Your Email Address", value="", key="notify_email")
     ticker_notify = st.text_input("Enter Stock Ticker to Monitor", value="AAPL", key="notify_ticker")
@@ -749,11 +723,6 @@ elif page == "Notification Subscription":
         else:
             st.error("Please provide both an email and a ticker to monitor.")
 
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
     st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
@@ -765,46 +734,18 @@ elif page == "Investment Information":
     ---
     
     ## 1. Options Fundamentals
-    ### Call Options
-    - Definition: A call option gives the buyer the right, but not the obligation, to purchase the underlying asset at a predetermined strike price on or before the expiration date.
-    - Example: Buy a call for stock XYZ with a strike of $100 and a premium of $5. If the stock rises to $120, the intrinsic value is $20 per share.
-    
-    ### Put Options
-    - Definition: A put option gives the buyer the right, but not the obligation, to sell the underlying asset at a predetermined strike price on or before the expiration date.
-    - Example: Buy a put for stock XYZ with a strike of $100 and a premium of $4. If the stock falls to $80, the intrinsic value is $20 per share.
+    - Gives the right to buy or sell an asset at a predetermined price.
     
     ## 2. Hedging with Options
-    ### Protective Put
-    - Strategy: Buy put options while holding the underlying asset to limit downside risk.
-    - Example: Own 100 shares of Company ABC at $50 per share and buy a put at $50.
-    
-    ### Covered Call
-    - Strategy: Hold the underlying asset and sell call options to generate additional income.
-    
-    ### Collar Strategy
-    - Strategy: Combine buying a put and selling a call to limit both downside and upside.
+    - Protective Put, Covered Call, Collar Strategy.
     
     ## 3. Options Strategies
-    ### Butterfly Spread
-    - Limited-risk, limited-reward using three strike prices.
-    
-    ### Condor Spread
-    - Similar to butterfly but with four strike prices.
+    - Butterfly Spread, Condor Spread.
     
     ## 4. Financial Ratios and Metrics
-    ### Current Ratio: Current Assets / Current Liabilities
-    ### Debt to Equity Ratio: Total Liabilities / Shareholders’ Equity
-    ### ROE: Net Income / Shareholders’ Equity
-    ### Gross Profit Margin: (Revenue - COGS) / Revenue
-    ### Net Profit Margin: Net Income / Revenue
-    ### ROA: Net Income / Average Total Assets
+    - Current Ratio, Debt to Equity, ROE, Gross/Net Profit Margins, ROA.
     """
     st.markdown(investment_info_content, unsafe_allow_html=True)
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
     st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
@@ -865,12 +806,6 @@ elif page == "Set Option Calls":
         ax_payoff.legend()
         st.pyplot(fig_payoff)
         
-        # Note: Actual order placement for options is not supported via Alpaca.
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
     st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
@@ -916,11 +851,6 @@ elif page == "Risk/Reward Calculator":
         ax.legend()
         st.pyplot(fig)
 
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
     st.markdown(footer_html, unsafe_allow_html=True)
 
 ###############################################
@@ -935,18 +865,16 @@ elif page == "Metrics & Sentiment Tracker":
     
     **How it works:**
     - **News Flow:** Fetches news articles from the past 24 hours using NewsAPI.
-    - **Sentiment Analysis:** Analyzes headlines using FinBERT (a financial sentiment model).
-    - **Technical Metrics:** Uses key metrics (e.g., RSI, with oversold <30 and overbought >70). (Thresholds are adjustable.)
-    - **Combined Signal:** Outputs one of three recommendations based on a simple aggregation of metrics and sentiment.
+    - **Sentiment Analysis:** Analyzes headlines using FinBERT.
+    - **Technical Metrics:** Uses key metrics (e.g., RSI).
+    - **Combined Signal:** Outputs a recommendation based on aggregated metrics.
     """)
     
     ticker_ms = st.text_input("Enter Stock Ticker", value="AAPL", key="ms_ticker")
-    # Use the provided API key stored in a variable named 'api_key_news'
     api_key_news = "c5c9ea5b981f4c6ab85badcf610fba78"
     st.write("Using NEWSAPI key:", api_key_news)
     
     if st.button("Analyze Stock", key="ms_analyze"):
-        # 1. Fetch technical data (latest intraday)
         try:
             data = fetch_stock_data(ticker_ms, period="1d", interval="1m")
             if data is not None:
@@ -960,7 +888,6 @@ elif page == "Metrics & Sentiment Tracker":
             st.error(f"Error fetching technical data: {e}")
             rsi = 50
         
-        # 2. Fetch news from last 24 hours
         today = datetime.datetime.now()
         yesterday = today - datetime.timedelta(days=1)
         from_date = yesterday.strftime("%Y-%m-%d")
@@ -973,15 +900,12 @@ elif page == "Metrics & Sentiment Tracker":
         else:
             st.write("No recent news found.")
         
-        # 3. Compute average sentiment using FinBERT
         avg_sentiment = compute_average_sentiment(headlines)
         st.write(f"Average Sentiment Score: {avg_sentiment:.2f} (scale: -1 negative, +1 positive)")
         
-        # 4. Combine RSI and sentiment to generate recommendation
         recommendation = generate_trading_signal(rsi, avg_sentiment)
         st.markdown(f"## Recommendation: **{recommendation}**")
         
-        # 5. Visualization: Display RSI in a simple bar chart with thresholds.
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.bar(["RSI"], [rsi], color="skyblue")
         ax.axhline(30, color="green", linestyle="--", label="Oversold (30)")
@@ -993,11 +917,65 @@ elif page == "Metrics & Sentiment Tracker":
     st.markdown("""
     **How Often?**  
     - This analysis runs on demand when you click **Analyze Stock**.
-    - For a continuous “hot stock” scan, you could schedule periodic analyses (e.g. every 60 minutes).
     """)
-    footer_html = """
-    <div class="footer">
-    <p>© 2025 Tobias Strauss</p>
-    </div>
-    """
+    st.markdown(footer_html, unsafe_allow_html=True)
+
+###############################################
+# PAGE 10: BOND ANALYSIS
+###############################################
+elif page == "Bond Analysis":
+    st.header("Bond Analysis")
+    st.markdown("### Bond Price Calculator")
+    with st.form("bond_form"):
+        face_value = st.number_input("Face Value ($)", value=1000.0, step=1.0)
+        coupon_rate = st.number_input("Coupon Rate (annual, %)", value=5.0, step=0.1) / 100.0
+        years_to_maturity = st.number_input("Years to Maturity", value=10, step=1)
+        yield_to_maturity = st.number_input("Yield to Maturity (annual, %)", value=4.0, step=0.1) / 100.0
+        coupon_frequency = st.selectbox("Coupon Frequency", options=[1, 2, 4], index=1)
+        submit_bond = st.form_submit_button("Calculate Bond Price")
+    if submit_bond:
+        periods = years_to_maturity * coupon_frequency
+        coupon_payment = face_value * coupon_rate / coupon_frequency
+        price = sum([coupon_payment / ((1 + yield_to_maturity / coupon_frequency) ** (i + 1)) for i in range(int(periods))])
+        price += face_value / ((1 + yield_to_maturity / coupon_frequency) ** periods)
+        st.write(f"Calculated Bond Price: ${price:.2f}")
+        yields = np.linspace(0.01, 0.10, 100)
+        prices = []
+        for y in yields:
+            p = sum([coupon_payment / ((1 + y / coupon_frequency) ** (i + 1)) for i in range(int(periods))])
+            p += face_value / ((1 + y / coupon_frequency) ** periods)
+            prices.append(p)
+        fig_bond, ax_bond = plt.subplots(figsize=(10, 6))
+        ax_bond.plot(yields * 100, prices, label="Bond Price Curve", color="blue")
+        ax_bond.axvline(yield_to_maturity * 100, color="red", linestyle="--", label="Selected Yield")
+        ax_bond.set_xlabel("Yield to Maturity (%)")
+        ax_bond.set_ylabel("Bond Price ($)")
+        ax_bond.set_title("Bond Price vs. Yield to Maturity")
+        ax_bond.legend()
+        st.pyplot(fig_bond)
+    st.markdown(footer_html, unsafe_allow_html=True)
+
+###############################################
+# PAGE 11: CRYPTO ANALYSIS
+###############################################
+elif page == "Crypto Analysis":
+    st.header("Crypto Analysis")
+    st.markdown("### Real-Time Cryptocurrency Analysis")
+    crypto_ticker = st.text_input("Enter Crypto Ticker (e.g., BTC-USD, ETH-USD)", value="BTC-USD")
+    crypto_period = st.selectbox("Select Data Period", options=["1d", "5d", "1mo", "3mo", "6mo", "1y"], index=0)
+    crypto_interval = st.selectbox("Select Data Interval", options=["1m", "5m", "15m", "30m", "1h", "1d"], index=0)
+    if st.button("Analyze Crypto"):
+        try:
+            crypto_data = fetch_stock_data(crypto_ticker, period=crypto_period, interval=crypto_interval)
+            st.subheader(f"Crypto Data for {crypto_ticker}")
+            st.dataframe(crypto_data.tail(10))
+            fig_crypto, ax_crypto = plt.subplots(figsize=(10, 6))
+            ax_crypto.plot(crypto_data.index, crypto_data["close"], label="Close Price", color="blue")
+            ax_crypto.set_title(f"{crypto_ticker} Price Chart")
+            ax_crypto.set_xlabel("Time")
+            ax_crypto.set_ylabel("Price ($)")
+            ax_crypto.legend()
+            st.pyplot(fig_crypto)
+        except Exception as e:
+            st.error(f"Error analyzing {crypto_ticker}: {e}")
     st.markdown(footer_html, unsafe_allow_html=True)
