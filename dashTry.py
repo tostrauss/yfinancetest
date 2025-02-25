@@ -30,7 +30,7 @@ def add_technical_indicators(data):
     # Ensure required columns are filled to avoid None values.
     for col in ["close", "high", "low"]:
         if col in data.columns:
-            data[col] = data[col].ffill()  # use ffill() instead of fillna(method='ffill')
+            data[col] = data[col].ffill()
     
     try:
         data["RSI"] = ta.rsi(data["close"], length=14)

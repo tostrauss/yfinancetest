@@ -18,11 +18,50 @@
 ######
 To-Do:
 
-1. Watchlist (Stocks you want to have a look at closer, "add Ticker to watchlist", Compare RSI from Industry to Watchlist)
-2. SMTP Server
-3. Email Notifications
+1. Educational Onboarding
+* Begin with a “Learn” section or tutorial:
+* Basic concepts of trading, differences between asset classes, quick knowledge checks.
+* Possibly short videos or interactive slides.
 
- “port” your full Streamlit application to use Alpaca as your data source and (hypothetical) broker. In this example, we replace the yfinance‐based data fetching with functions that call Alpaca’s REST API for historical bars (and—for options data—a try/fallback to yfinance if the Alpaca options endpoint isn’t available). We also add helper functions for order submission. (Note that some endpoints—especially for options orders—are shown as hypothetical because Alpaca’s options API is still emerging. You may need to adjust endpoints and parameters per your actual Alpaca account and API documentation.)
+2. Strategy Builder & Simulations
+* Provide an interface (“Build”) to pick which assets, define signals (e.g., RSI < 30 => Buy), set day-trade toggles, etc.
+* Let them run a backtest on historical or even randomized data.
+
+3. Analysis & Visualization
+* Use Charts & Indicators to let User see performance, distribution of returns, drawdowns, etc.
+* Possibly incorporate advanced “Math” or risk metrics.
+* Offer an “Explore” mode for deeper data inspection.
+
+4. Go Live
+* Switch from “paper trading” to real brokerage (if desired).
+* Display a Portfolio tab to track open trades, overall P/L, and so on.
+
+5. User Profiling
+* (Optional) Let them input risk tolerance, goals, or prior experience.
+* Could shape the content or disclaimers for each user.
+
+
+# Potential Next Steps
+1. MVP: Start with the “Learn” module and a simple “Build + Backtest” flow. This will give users immediate value in exploring trading ideas.
+
+2. Incremental Features:
+* Add advanced indicators or an AI-driven “strategy advisor.”
+* Integrate a brokerage for real trading.
+* Expand user profile features for more personalized guidance.
+
+
+UI Flow:
+-Onboarding / Profile Setup
+-Learn & Quiz
+-Build a Strategy (Indicators, etc.)
+-Backtest & Evaluate (Charts, P/L, distribution)
+-Option to Paper Trade or Connect Real Broker
+
+
+
+
+
+
 
 
 
