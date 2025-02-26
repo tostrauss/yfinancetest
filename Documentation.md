@@ -23,7 +23,7 @@ To-Do:
 * Basic concepts of trading, differences between asset classes, quick knowledge checks.
 * Possibly short videos or interactive slides.
 
-2. Strategy Builder & Simulations
+2. Strategy Builder & Simulations ("Header")
 * Provide an interface (“Build”) to pick which assets, define signals (e.g., RSI < 30 => Buy), set day-trade toggles, etc.
 * Let them run a backtest on historical or even randomized data.
 
@@ -58,11 +58,34 @@ UI Flow:
 -Option to Paper Trade or Connect Real Broker
 
 
+Website (Starting with Login/Sign-Up) -> 
+1. Page = Learn/Lessons 
+                (*Asset classes:
+                    - Stocks (Bluechip vs. small/med/large cap & pennystocks), (Bid/Ask spread), (Order types), (Dividends)
+                    - Bonds (Rolling over), (Auctions)
+                 *Types of trades:
+                    - Long, Short, Options, Arbitrage
+                 *Indicators/Date:
+                    - Earnings Reports/ Earnings
+                    - Bollinger Bands
+                    - News
+                    - Candles
+                    - Market sentiment 
+                    - Projected Growth
+                    - Analyst Indicators
+                    - Cash Flow
+                    - Debt/Equity
+                 *Strategies:
+                    -Pros/Cons of Daytrading/Swingtrading/Long-Term Trading/Long and short only
+                    -Complex Options
+                    -Event driven
+                    -Algorithmic
+                    -Systematic
+                    -Value driven
+                    -Analyst driven
+                    -Industry driven)
 
+Starting off with Login/Sign-Up, creating new account (username, email, password, how much money you want to invest, Risktolerance, Goals) => store the information in a database to set up new account, click on "Learn" -> Pop-up ("Welcome to the learning page. Take the example test to determine your expertise."). Make it personal!!
 
-
-
-
-
-
+Alpaca! Paper Trading and possible option for real brokerage!
 
