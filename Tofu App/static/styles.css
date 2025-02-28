@@ -1,0 +1,62 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #3b0044;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.category {
+    background-color: #ff9900;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    padding: 15px;
+    cursor: pointer;
+}
+
+.category h2 {
+    margin: 0;
+}
+
+.lessons {
+    display: none;
+    margin-top: 10px;
+}
+
+.lesson {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 3px;
+    padding: 10px;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.lesson:hover {
+    background-color: #e0e0e0;
+}
+
+.slideshow {
+    display: none;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.slide {
+    text-align: center;
+}
+
+button {
+    margin: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+}

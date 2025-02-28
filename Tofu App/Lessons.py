@@ -1,0 +1,165 @@
+#Author: Hayden Hall
+#Purpose: Create some baseline lessons for project
+
+import click
+
+
+
+"""
+
+FIRST LESSONS WITH QUIZZEZ AT THE END
+
+"""
+
+#Note: I'm not sure how to incorporate this with whichever environment we will be using or how to make it user friendly. Will definitely need help with one of these but can fix the rest from there
+@click.command()
+#First Easy Lesson
+def whatIsAStock(): #Each slide seperated by a new print line
+    print("The first step in trading stocks is knowing what a stock is. Stocks, also known as equities or shares, are slices of a company that denote partial ownership of the company")
+    print("Companies sell stocks to raise money. Depending on the type of company and the kind of stock, stockholders may recieve dividends (a distribution of company earnings) and the right to vote at shareholder meetings")
+    print("There are two types of shares: common and prefered. Common stock (or common shares) generally offer higher rewards but also carry greater risk, especially when investing in smaller companies.")
+    print("Owners of common shares are entitled to vote at shareholder meetings, with the strength of their vote changing proportionally with the number of shares they own.")
+    print("Common shares are also directly tied to the market and the value of them can fluctuate immensely. These shares are the most commonly traded on the stock market and are what most people are talking about when they mention stocks.")
+    print("Although common shares can recieve dividends, they are not guaranteed. This is why some investors like preferred shares. Although these shares don't carry the power to vote in shareholder meetings, they are more stable than common shares.")
+    print("Preferred shares give shareholders a fixed dividend rate, meaning that no matter how well or poorly the company does, owners of preferred shares will recieve a fixed payout either quarterly, semi-annually, or annually depending on the company.")
+    print("Preferred shares also limit downside for investors during catastrophic failures of a company such as bankruptcy. Before any common stock holders are paid out, a company must first pay out all preferred stock holders.")
+
+    #Quiz
+    print("Are you ready to show your proficiency in stocks?")
+    
+    #Question 1
+    solution = "C. Common and Preferred"
+    question = "What are the two kinds of shares an investor can buy?"
+    options = ["A. General and Preferred", "B. General and Voting", "C. Common and Preferred", "D. Common and Voting"]
+    answer = click.prompt(
+        question,
+        type = click.Choice(options, case_sensitive = True),
+        show_choices = True
+        )
+
+    #User's choice
+    click.echo(f'You selected: {answer}')
+    if (solution != answer):
+        print("Sorry, that't not right. The correct answer was: The two types of shares an investor can buy are Common and Preferred")
+    else:
+        print("Correct! Starting off strong I see")
+
+    #Question 2
+    solution = "False"
+    question = "True or false? Preferred shareholders recieve dividends quarterly."
+    options = ["True", "False"]
+    answer = click.prompt(
+        question,
+        type = click.Choice(options, case_sensitive = True),
+        show_choices = True
+        )
+
+    #User's choice
+    click.echo(f'You selected: {answer}')
+    if (solution != answer):
+        print("Sorry, that's not right. Preferred shareholders may recieve dividends quarterly, but could also only recieve them semi-annually or annually depending on the company.")
+    else:
+        print("Correct! Keep it up!")
+
+
+#First Intermediate Lesson
+def bollingerBands(): #Same format as the previous lesson
+    print("As you progress in your trading journey, you may want to know what signals skilled traders use to help them identify good trades")
+    print("Bollinger bands are one of those signals, which are commonly referred to as indicators. Bollinger bands were created by John Bollinger in the 1980s as a tool to help traders evaluate the movement of an asset's price over time as well as its volatility")
+    print("A Bollinger band consists of three bands, the middle of which is a moving average, as well as an upper and lower band. The upper and lower bands are calculated by adding or subtracting a specified number of standard deviations (usually 2) to the middle band")
+    print("The moving average these bands reference is most commonly 20 periods, though this can be changed, and is used to help a trader identify strength and direction of trends, overbought or oversold conditions, and gives a good indicator of an asset's volatility")
+    print("Here is what Bollinger bands on a stock such as Tesla looks like") #INSERT GRAPHIC HERE
+    print("Prices near the upper band may indicate overbought conditions, which could be a good signal to sell, whereas prices near the lower band may indicate oversold conditions and could be a good signal to buy. The distance between the upper and lower bands also reflects market volatility")
+    print("One thing traders who utilize Bollinger bands look out for is what's called a Bollinger squeeze. This is when the upper and lower bands contract significantly, indicating low volatility and can signal a potential breakout one way or another")
+    print("Though Bollinger bands may help to provide insight into how a stock could move, it is important to take other factors into account before rushing into a trade as they have their limitations and can sometimes produce false signals, especially in volatile markets.")
+
+    #Quiz
+    print("Are you ready to show your proficiency in Bollinger Bands?")
+
+    #define question
+    solution = "By adding or subtracting a specified number of standard deviations to the middle band"
+    question = "How are the upper and lower bands calculated?"
+    options = ["By adding or subtracting $2 to the middle band", "By adding or subtracting a specified number of standard deviations to the middle band", "By taking the moving average over the past month and year", "By asking John Bollinger"]
+    answer = click.prompt(
+        question,
+        type = click.Choice(options, case_sensitive = True),
+        show_choices = True
+        )
+
+    #User's choice
+    click.echo(f'You selected: {answer}')
+    if (solution != answer):
+        print("Sorry, that's not right. The upper and lower bands are calculated by adding or subtracting a specified number of standard deviations to the middle band")
+    else:
+        print("Correct! Nice job.")
+
+    #define question
+    solution = "False"
+    question = "True or false: by looking at Bollinger bands, a trader can make an informed decision about which equities they should buy."
+    options = ["True", "False"]
+    answer = click.prompt(
+        question,
+        type = click.Choice(options, case_sensitive = True),
+        show_choices = True
+        )
+
+    #User's choice
+    click.echo(f'You selected: {answer}')
+    if (solution != answer):
+        print("Sorry, that's not right. There are many factors to take into account before making a decision on what equities to purchase. Bollinger bands are helpful but there is no single determinite factor in purchasing an equity")
+    else:
+        print("Correct! You'll be a pro trader in no time.")
+
+#First Advanced Lesson
+def pairsTrading():
+    print("This lesson we will cover a strategy known as pairs trading, sometimes referred to as statistical arbitrage; it's a market neutral strategy where a trader can bet on a price convergence or divergence of two related equities.")
+    print("By using fundamental and technical analysis, traders can identify two or more equities with a high convergence level, such as Pepsi (ticker PEP) and Coke (ticker KO). From here, more analysis can be done to decide whether the trader wants to bet on convergence or divergence.")
+    print("In the Coke and Pepsi example, a trader can go long Coke and short Pepsi to bet on those equities price convergence, whereas to bet on the stock prices diverging, they would go long Pepsi and short Coke. (Pepsi currently trades higher per share than Coke)")
+    print("By making a short and a long trade, a trader is protected if both equities fall in price or rise in price. Because the only way a loss is incurred is if the stock prices diverge after placing a convergent bet or vice versa, the only way a trader profits is the opposite.")
+    print("Pairs trading is a viable strategy that requires a lot of funamental and technical analysis and is useful in protecting a trader from market instability.")
+    print("Though the terms pairs trading and statistical arbitrage are often used interchangably, there are some core differences. While pairs trading is relatively simple and only requires basic statistical tools, most statistical arbitrage strategies take advantage of high frequency trading algorithms.")
+    print("Statistical arbitrage strategies and pairs trading both rely on market prices diverging or converging on a predicted normal, known as a mean reversion (prices converge to the mean) or an overextension (the market has made an extended divergence).")
+    print("One thing pairs traders should take into account is that in most scenarios, they are competing with hedgefunds and high frequency traders that can execute trades in a fraction of a second by using algorithms that require an immense amount of statistical analysis.")
+    print("Because of this, many traders consider pairs trading to be a more theoretical strategy than one that can be effectively implemented. However the concepts of pairs trading can be utilized in other trading strategies to hedge or protect a trader from large market swings")
+
+    #Quiz
+    print("Are you ready to show you proficiency in pairs trading?")
+
+    #define question
+    solution = "Short the higher priced stock and go long the lower priced one"
+    question = "If a trader wants to bet on the prices of two stocks converging, which strategy should they implement?"
+    options = ["Short the higher priced stock and go long the lower priced one", "Short the lower priced stock and go long the higher priced one", "Short the higher and lower priced stock", "Go long the higher and lower priced stock"]
+    answer = click.prompt(
+        question,
+        type = click.Choice(options, case_sensitive = True),
+        show_choices = True
+        )
+
+    #User's choice
+    click.echo(f'You selected: {answer}')
+    if (solution != answer):
+        print("Sorry, that's not right. If a trader wants to bet on the prices of two stocks converging, they should short the higher priced stock and go long the lower priced one")
+    else:
+        print("That's right!")
+
+    #define question
+    solution = "False"
+    question = "True or false: pairs trading is strictly theorectical and should not be used in practice"
+    options = ["True", "False"]
+    answer = click.prompt(
+        question,
+        type = click.Choice(options, case_sensitive = True),
+        show_choices = True
+        )
+
+    #User's choice
+    click.echo(f'You selected: {answer}')
+    if (solution != answer):
+        print("Sorry, that's not right. Though some traders consider pairs trading to be a more theoretical trading strategy, many high frequency traders and hedgefunds find great success in pairs trading")
+    else:
+        print("Correct! You're on a roll.")
+        
+#TESTING        
+#whatIsAStock()
+#bollingerBands()
+#pairsTrading()

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson Categories</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Lesson Categories -->
+        <div class="category" onclick="toggleLessons('learnTheBasics', event)">
+            <h2>Learn the Basics</h2>
+            <div class="lessons" id="learnTheBasics-lessons">
+                <div class="lesson" onclick="showSlideshow('whatIsAStock', event)">What is a stock?</div>
+                <div class="lesson" onclick="showSlideshow('valueOfMoney', event)">Value of Money</div>
+            </div>
+        </div>
+
+        <div class="category" onclick="toggleLessons('tradingStrategies')">
+            <h2>Trading Strategies</h2>
+            <div class="lessons" id="tradingStrategies-lessons">
+                <div class="lesson" onclick="showSlideshow('pairsTrading')">Pairs Trading</div>
+                <div class="lesson" onclick="showSlideshow('chemistry')">Chemistry</div>
+            </div>
+        </div>
+        
+        <div class="category" onclick="toggleLessons('statisticalAnalysis')">
+            <h2>Statistical Analysis</h2>
+            <div class="lessons" id="statisticalAnalysis-lessons">
+                <div class="lesson" onclick="showSlideshow('bollingerBands')">Bollinger Bands</div>
+            </div>
+        </div>
+
+        <!-- Slideshow Section -->
+        <div id="slideshow" class="slideshow" style="display: none;">
+            <div class="slide">
+                <h2 id="slide-title">Slideshow Title</h2>
+                <p id="slide-content">Slideshow content will appear here.</p>
+                <img id ="slide-image" src="" alt="Slide Image" style="max-width: 100%; height: auto; display: none;">
+
+            </div>
+            <button onclick="prevSlide()">Previous</button>
+            <button onclick="nextSlide()">Next</button>
+        </div>
+    </div>
+    <!--Pass the image path to javaScript-->
+    <script>
+        const imageBasePath = "{{ url_for('static', filename='images/') }}"
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
